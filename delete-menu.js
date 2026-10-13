@@ -181,7 +181,7 @@
      quizSelected=null;
      by('quizDetail').classList.add('hide');
     }
-    if(selected?.id===preview.class_id||selected&&quizzes.some(q=>q.id===id)){
+    if(selected&&quizzes.some(q=>q.id===id)){
      await refreshSelected();
     }else{
      await loadClasses();
