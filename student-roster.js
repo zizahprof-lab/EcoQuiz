@@ -136,7 +136,7 @@
    return;
   }
   const caption=document.createElement('p');caption.className='muted';
-  caption.textContent='Aperçu des '+Math.min(8,previewCandidates.length)+' premières identités (sur '+previewCandidates.length+'). Les codes personnels seront créés seulement après validation.';
+  caption.textContent='Aperçu des '+Math.min(40,previewCandidates.length)+' identités détectées (sur '+previewCandidates.length+'). Les codes personnels seront créés uniquement après validation.';
   table.append(caption);
   const tab=document.createElement('table');
   const header=document.createElement('thead'),headrow=document.createElement('tr');
@@ -145,7 +145,7 @@
   }
   header.append(headrow);tab.append(header);
   const body=document.createElement('tbody');
-  previewCandidates.slice(0,8).forEach((record,index)=>{
+  previewCandidates.slice(0,40).forEach((record,index)=>{
    const row=document.createElement('tr');
    for(const text of [String(index+1),record.display_name,'Nouveau code généré']){
     const td=document.createElement('td');td.textContent=text;row.append(td);
@@ -165,7 +165,11 @@
    documentCSV=csv.parseDocument(text);
    if(documentCSV.rows.length>3000)throw Error('CSV très volumineux : plus de 3 000 lignes.');
    configureMapping();
-   const hint='Fichier lu : '+file.name+' · '+documentCSV.rows.length+' lignes · '+documentCSV.headers.length+' colonnes. Vérifie l’aperçu, puis valide.';
+   const pronoteDetected=documentCSV.defaults.mode==='combined' && documentCSV.defaults.full>=0 && csv.fold(documentCSV.headers[documentCSV.defaults.full])==='eleves';
+   const rowsCount=documentCSV.rows.length-documentCSV.startRow;
+   const hint=pronoteDetected
+    ?'✓ Format Pronote reconnu : '+rowsCount+' ligne(s) élève, avec noms et prénoms dans la colonne « Élèves ». Les autres colonnes ne seront pas importées. Vérifie l’aperçu puis valide.'
+    :'Fichier lu : '+file.name+' · '+rowsCount+' ligne(s) · '+documentCSV.headers.length+' colonnes. Vérifie les colonnes proposées et l’aperçu, puis valide.';
    status(hint);
   }catch(error){
    status('Import impossible : '+error.message,'failure');
