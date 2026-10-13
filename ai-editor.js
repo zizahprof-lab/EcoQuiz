@@ -135,9 +135,10 @@ function csvToCourse(raw,filename){
 }
 async function getText(file){
  if(file.size>12*1024*1024)throw Error('Fichier trop volumineux : maximum 12 Mo.');
- const ext=(file.name.split('.').pop()||'').toLowerCase();
+ const ext=(file.name.includes('.')?file.name.split('.').pop():'').toLowerCase();
+ const csvMime=['text/csv','application/csv','application/vnd.ms-excel','text/comma-separated-values'].includes(String(file.type||'').toLowerCase());
  if(['txt','md'].includes(ext))return await file.text();
- if(['csv','tsv'].includes(ext)){
+ if(['csv','tsv'].includes(ext)||(!ext&&csvMime)){
   const bytes=new Uint8Array(await file.arrayBuffer());
   const extracted=csvToCourse(decodeCSVText(bytes),file.name);
   return extracted.text;
@@ -165,7 +166,7 @@ by('aiFile').addEventListener('change',async()=>{
  try{
   const text=await getText(file);
   by('aiSource').value=text.slice(0,50000);
-  const type=/\.(csv|tsv)$/i.test(file.name)?'Tableau CSV chargé · ':'';
+  const type=/\.(csv|tsv)$/i.test(file.name)||['text/csv','application/csv','application/vnd.ms-excel','text/comma-separated-values'].includes(String(file.type||'').toLowerCase())?'Tableau CSV chargé · ':'';
   info.textContent='✓ '+type+file.name+' · '+text.length+' caractères extraits'
    +(text.length>50000?' (contenu limité à 50 000 caractères)':'')
    +'. Le contenu est visible dans la zone « Cours ou contexte ».';
@@ -192,7 +193,7 @@ async function checkGeminiStatus(){
  }
 }
 by('newQuiz').addEventListener('click',()=>{
- by('aiMessage').textContent='';by('aiSource').value='';by('aiExtra').value='';by('aiFile').value='';by('aiFileInfo').textContent='Texte extrait localement.';
+ by('aiMessage').textContent='';by('aiSource').value='';by('aiExtra').value='';by('aiFile').value='';by('aiFileInfo').textContent='PDF, DOCX, CSV, TSV, TXT ou MD. Pour une liste d’élèves Pronote, utilise l’import de la liste des élèves.';
  checkGeminiStatus();
 });
 function autoTitle(source){
