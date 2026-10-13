@@ -1,7 +1,72 @@
 <!doctype html>
 <html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ÉcoQuiz | 2BBE</title>
 <style>
-:root{font-family:system-ui,-apple-system,Segoe UI,Arial;color:#213348;background:#f4f7fa}*{box-sizing:border-box}body{margin:0}header{background:white;border-bottom:1px solid #dfe7ec;padding:17px max(16px,calc((100vw - 960px)/2));display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.brand{font-size:24px;font-weight:850;color:#197764}.brand span{color:#b95288}main{max-width:850px;margin:24px auto;padding:0 14px}.card{background:white;border:1px solid #dae3ea;box-shadow:0 6px 24px #102b4010;border-radius:18px;padding:24px;margin-bottom:18px}h1{font-size:28px;margin:0 0 10px}h2{font-size:19px;margin:0 0 14px}.muted{color:#637485;font-size:14px}button{font:inherit;background:#197764;color:white;border:0;border-radius:10px;padding:11px 16px;font-weight:700;cursor:pointer}button:disabled{opacity:.5;cursor:wait}.light{background:#e9f0f4;color:#24394c}.small{font-size:13px}.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.between{justify-content:space-between}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}label{display:block;font-weight:600;font-size:13px;margin-bottom:5px}input{width:100%;font:inherit;border-radius:9px;border:1px solid #b9c9d4;padding:12px}.hide{display:none!important}.choice{display:block;text-align:left;width:100%;color:#283e4c;background:#fff;border:1px solid #cbd9df;margin:9px 0;font-weight:500}.choice.on{border:2px solid #197764;background:#e7f5f0}.progress{height:8px;background:#e1e9ed;border-radius:8px;overflow:hidden;margin:15px 0}.progress div{background:#197764;height:100%}.correct{border-left:4px solid #2d946d;background:#e9f7ef;padding:12px;margin:10px 0;border-radius:8px}.wrong{border-left:4px solid #d77a66;background:#fff1ed;padding:12px;margin:10px 0;border-radius:8px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#eef8f4;border-radius:10px;padding:14px}.stat strong{display:block;font-size:25px;color:#146e5d}.tablewrap{overflow-x:auto}table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e5edf1}th{background:#f3f6f8}.bar{height:12px;background:#e4eaf0;border-radius:8px;overflow:hidden;flex:1;min-width:70px}.bar span{background:#50a78c;height:100%;display:block}.notice{padding:12px;border-radius:8px;background:#fff2df;color:#754d17;margin:10px 0}.qitem{display:flex;align-items:center;gap:10px;margin:9px 0}.qitem small{width:35px}.qitem b{min-width:40px;text-align:right}.full{width:100%}#qr img{max-width:210px;max-height:210px}@media(max-width:600px){.grid{grid-template-columns:1fr}.card{padding:17px}.stats{grid-template-columns:1fr 1fr}h1{font-size:24px}}
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+:root{font-family:'IBM Plex Sans',Arial,sans-serif;color:#263847;background:#f0f3f5;font-synthesis:none}
+*{box-sizing:border-box}
+body{margin:0;line-height:1.45}
+header{background:#253440;border-bottom:1px solid #354958;min-height:72px;padding:15px max(20px,calc((100vw - 1060px)/2));display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:700;letter-spacing:-.85px;color:#f5fafb;line-height:1.2}
+.brand span{color:#8cc1d0}
+header nav{gap:8px}
+header nav .light{background:transparent;color:#dbe6ea;border:1px solid #586d7d}
+header nav .light:hover{background:#354959;color:#fff}
+main{max-width:1080px;margin:28px auto 50px;padding:0 20px}
+.card{background:#fff;border:1px solid #dce4e9;border-radius:6px;padding:24px 28px;margin-bottom:16px;box-shadow:0 1px 3px #2133430a}
+h1{font-size:26px;letter-spacing:-.65px;font-weight:600;margin:0 0 10px;line-height:1.24}
+h2{font-size:17px;letter-spacing:-.2px;font-weight:600;margin:0 0 13px}
+p{margin:11px 0}
+.muted{color:#657583;font-size:13px}
+button{font:inherit;font-size:13px;background:#44617c;color:white;border:1px solid #44617c;border-radius:4px;padding:10px 15px;font-weight:600;cursor:pointer;transition:background .14s,border-color .14s}
+button:hover{background:#334e67;border-color:#334e67}
+button:focus-visible,input:focus-visible{outline:2px solid #6496b3;outline-offset:2px}
+button:disabled{opacity:.55;cursor:not-allowed}
+.light{background:#fff;border:1px solid #ccd8df;color:#344d60}
+.light:hover{background:#edf3f6;border-color:#9caebc;color:#243947}
+.small{font-size:12px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.between{justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+label{display:block;font-weight:600;font-size:12px;color:#526779;margin-bottom:5px}
+input{width:100%;font:inherit;font-size:14px;border-radius:4px;border:1px solid #c2d0d8;padding:11px 12px;background:#fff;color:#243949}
+.hide{display:none!important}
+.choice{display:block;text-align:left;width:100%;color:#344c5b;background:#fff;border:1px solid #d3dfe5;margin:8px 0;padding:13px 14px;font-size:14px;font-weight:400;border-radius:4px}
+.choice:hover{background:#f3f8fa;border-color:#8ea7b8}
+.choice.on{border:1px solid #4a7e91;background:#edf5f8;box-shadow:inset 3px 0 0 #4a7e91;font-weight:600}
+.progress{height:5px;background:#e6ecef;border-radius:3px;overflow:hidden;margin:17px 0 23px}
+.progress div{background:#4a7e91;height:100%}
+.correct{border-left:3px solid #4a876c;background:#f3f8f5;padding:12px 16px;margin:10px 0;border-radius:2px}
+.wrong{border-left:3px solid #bf7d68;background:#fcf6f4;padding:12px 16px;margin:10px 0;border-radius:2px}
+.correct p,.wrong p{margin:6px 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:19px 0}
+.stat{background:#f7f9fa;border:1px solid #e2e9ed;border-radius:4px;padding:13px 15px;font-size:12px;color:#6a7984}
+.stat strong{display:block;font-size:27px;color:#263847;line-height:1.25;font-weight:600;letter-spacing:-.5px;margin-bottom:3px}
+.tablewrap{overflow-x:auto;border:1px solid #e2e9ed;border-radius:4px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid #e8eef1}
+th{background:#f4f7f9;color:#516577;font-weight:600;white-space:nowrap}
+tbody tr:hover{background:#f8fafb}
+tbody tr:last-child td{border-bottom:none}
+.bar{height:8px;background:#e5ebef;border-radius:2px;overflow:hidden;flex:1;min-width:70px}
+.bar span{background:#4a7e91;height:100%;display:block}
+.notice{padding:11px 13px;border-radius:3px;border-left:3px solid #b68b52;background:#faf4e9;color:#74592d;margin:10px 0}
+.qitem{display:flex;align-items:center;gap:12px;margin:12px 0}
+.qitem small{width:35px;color:#536676;font-weight:600}
+.qitem b{min-width:45px;text-align:right;color:#3d5b70;font-size:12px;font-weight:600}
+.full{width:100%}
+#qr{display:inline-block;margin:12px 0;background:white;padding:12px;border:1px solid #e3e9ee}
+#qr img{max-width:210px;max-height:210px}
+#linkText{word-break:break-all;color:#586f7d}
+#student{max-width:790px;margin:auto}
+#student #welcome{padding-top:30px;padding-bottom:30px}
+#student #welcome>p:first-child,#dash .card:first-child .muted:first-child{font-size:11px;letter-spacing:1.3px;text-transform:uppercase;font-weight:700;color:#5c7c90}
+#dash .card:first-child{border-top:3px solid #44617c}
+#questionPanel .row:first-child{font-size:12px}
+#questionPanel h2{font-size:20px;line-height:1.4;margin-bottom:20px}
+#resultPanel>h1{font-size:30px}
+@media(max-width:600px){header{min-height:62px;padding:12px 15px}.brand{font-size:21px}header nav .light{padding:8px 10px}main{margin:16px auto;padding:0 12px}.grid{grid-template-columns:1fr}.card{padding:18px 16px;margin-bottom:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:11px}.stat strong{font-size:23px}h1{font-size:23px}#questionPanel h2{font-size:18px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}}
+
 </style></head><body><header><div class="brand">Éco<span>Quiz</span></div><nav class="row"><button class="light" id="openStudent">Élève</button><button class="light" id="openTeacher">Professeur</button></nav></header><main>
 <section id="student"><div class="card" id="welcome"><p class="muted">ÉCONOMIE-GESTION • 2BBE</p><h1>Besoins, biens, services et organisations</h1><p>10 questions • Note sur 10 et correction immédiate après validation.</p><div class="grid"><div><label for="last">Nom</label><input id="last" maxlength="80" autocomplete="family-name"></div><div><label for="first">Prénom</label><input id="first" maxlength="80" autocomplete="given-name"></div></div><p><button id="start">Commencer le quiz →</button></p><p class="muted small">Tes réponses et ton identité seront enregistrées pour permettre à ton professeur d'analyser les résultats.</p></div>
 <div class="card hide" id="questionPanel"><div class="row between"><span id="counter" class="muted"></span><span class="muted">2BBE</span></div><div class="progress"><div id="progress"></div></div><h2 id="question"></h2><div id="choices"></div><button id="next" disabled>Question suivante →</button><p class="muted small" id="saving"></p></div>
