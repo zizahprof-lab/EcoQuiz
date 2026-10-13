@@ -33,8 +33,8 @@
     if(!h)return '';
     if(/^(prenom|prenoms|prenom eleve|prenom de l eleve|prenom usuel|prenom s)$/.test(h))return 'first';
     if(/^(nom|nom eleve|nom de l eleve|nom de famille|nom usage|nom usuel|nom de naissance|nom patronymique)$/.test(h))return 'last';
-    if(/^(nom prenom|nom et prenom|nom et prenoms|nom prenoms|eleve|identite|identite eleve|identite de l eleve)$/.test(h))return 'full';
-    if(/^(classe|division|classe division|classe de l eleve)$/.test(h))return 'class';
+    if(/^(nom prenom|nom et prenom|nom et prenoms|nom prenoms|eleve|eleves|liste des eleves|nom et prenom des eleves|identite|identite eleve|identite des eleves|identite de l eleve)$/.test(h))return 'full';
+    if(/^(classe|division|classe division|classe de l eleve|classe des eleves|classe de rattachement|classe d origine)$/.test(h))return 'class';
     return '';
   }
   function headerGuess(rows){
@@ -80,15 +80,34 @@
     }:{mode:'separate',last:0,first:1,full:0,class:-1};
     return {rows:raw,headers,startRow,headerIndex,defaults,delimiter:best.delimiter};
   }
+  // Pronote exports its "Élèves" column as "NOM COMPOSÉ Prénom(s)".
+  // Only reorder when the uppercase surname and given name are unambiguous.
+  function pronoteFullName(value){
+    const raw=tidy(value);
+    if(!raw)return '';
+    const tokens=raw.split(/\s+/);
+    const hasLetter=word=>/[A-Za-zÀ-ÿ]/.test(word);
+    const allCaps=word=>hasLetter(word)&&word===word.toLocaleUpperCase('fr');
+    const isJoiner=word=>word==='-'||word==='–'||word==='—';
+    let surnameEnd=0;
+    while(surnameEnd<tokens.length&&(allCaps(tokens[surnameEnd])||(surnameEnd>0&&isJoiner(tokens[surnameEnd]))))surnameEnd++;
+    if(surnameEnd>0&&surnameEnd<tokens.length&&tokens.slice(surnameEnd).every(t=>!allCaps(t))){
+      const family=tokens.slice(0,surnameEnd).join(' ').replace(/\s+([-–—])\s+/g,'$1');
+      const given=tokens.slice(surnameEnd).join(' ');
+      return tidy(given+' '+family);
+    }
+    return raw;
+  }
+  const identityKey=value=>fold(pronoteFullName(value));
   function selectStudents(doc,{mode='separate',last=-1,first=-1,full=-1,classColumn=-1,classValue='*'}={},existingNames=[]){
-    const existing=new Set(existingNames.map(fold));
+    const existing=new Set(existingNames.map(identityKey));
     const seen=new Set();
     const candidates=[];let filtered=0,invalid=0,duplicates=0;
     for(let i=doc.startRow;i<doc.rows.length;i++){
       const row=doc.rows[i];
       if(classColumn>=0&&classValue!=='*'&&tidy(row[classColumn])!==classValue){filtered++;continue}
       let name='';
-      if(mode==='combined')name=tidy(row[full]);
+      if(mode==='combined')name=pronoteFullName(row[full]);
       else {
         const nom=tidy(row[last]),prenom=tidy(row[first]);
         if(nom&&prenom)name=prenom+' '+nom;
@@ -96,7 +115,7 @@
       if(!name||name.length>100||name.length<3||name.split(' ').filter(Boolean).length<2||!/[a-zA-ZÀ-ÿ]/.test(name)){
         invalid++;continue;
       }
-      const key=fold(name);
+      const key=identityKey(name);
       if(existing.has(key)||seen.has(key)){duplicates++;continue}
       seen.add(key);
       candidates.push({display_name:name,rowIndex:i});
@@ -113,5 +132,5 @@
     try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes)}
     catch{return new TextDecoder('windows-1252').decode(bytes)}
   }
-  root.EcoQuizCSV=Object.freeze({fold,tidy,parseCSV,parseDocument,selectStudents,readFile});
+  root.EcoQuizCSV=Object.freeze({fold,tidy,pronoteFullName,parseCSV,parseDocument,selectStudents,readFile});
 })(typeof window!=='undefined'?window:globalThis);
