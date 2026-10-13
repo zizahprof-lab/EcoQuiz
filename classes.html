@@ -21,7 +21,7 @@
 <script>
 const BASE='https://gxqepioanisijaszucwz.supabase.co',KEY='sb_publishable_M1QcweNM2782kXp1LmhMNA_VKQBr8SK',el=id=>document.getElementById(id);
 let token='',refreshToken='',expiresAt=0,classes=[],selected=null,students=[],quizzes=[],quizSelected=null,questionsCount=0,concepts=[],attempts=[];
-const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;':'&quot;',"'":'&#39;'}[c]));
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notify=(msg,err=false)=>{el('authMessage').textContent=msg;el('authMessage').className=err?'notice error':'muted'};
 const auth=async()=>{if(!token)throw Error('Connexion nécessaire');if(Date.now()<expiresAt-60000)return;const r=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refreshToken})});if(!r.ok)throw Error('Session expirée');const d=await r.json();token=d.access_token;refreshToken=d.refresh_token;expiresAt=Date.now()+d.expires_in*1000};
 const req=async(path,method='GET',data)=>{await auth();const r=await fetch(BASE+'/rest/v1/'+path,{method,headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json',Prefer:'return=representation'},body:data===undefined?undefined:JSON.stringify(data)});if(!r.ok){const e=await r.json().catch(()=>({}));throw Error(e.message||'Erreur serveur ('+r.status+')')}return r.status===204?[]:r.json()};
