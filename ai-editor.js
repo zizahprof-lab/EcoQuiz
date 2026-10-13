@@ -184,6 +184,7 @@ async function generate(more){
    card.querySelector('.explanation').value=String(q.explanation||'');
    // Les notions restent associées aux questions pour l'ancrage, mais ne sont pas visibles.
    const match=concepts.find(x=>x.title.toLowerCase()===String(q.concept_title||'').toLowerCase());
+   card.dataset.conceptTitle=String(q.concept_title||'').trim().slice(0,120);
    if(match)card.querySelector('.concept').value=match.id;
    highlightCorrect(card);
   }
