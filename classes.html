@@ -93,6 +93,53 @@ button.classTile:hover{background:white;border-color:#c8b3e4;transform:translate
 #editor .answer-option.is-correct .markCorrect{display:none}
 #editor .answer-option:focus-within{outline:2px solid #93c5fd;outline-offset:1px}
 #editor .answer-option.is-correct:focus-within{outline-color:#16a34a}
+
+/* ÉcoQuiz — Import Pronote et cartes codes élèves */
+.roster-heading{align-items:flex-start;margin-bottom:14px}
+.roster-heading h2{margin:0 0 4px}
+.roster-heading p{margin:0}
+.csvImportButton{background:#2563eb;border-color:#2563eb}
+.csvImportButton:hover{background:#1d4ed8}
+.printRosterButton{background:#7c3aed;border-color:#7c3aed}
+.printRosterButton:hover{background:#6d28d9}
+.csv-panel{border:1px solid #b9d3f6;border-left:5px solid #2563eb;background:#fbfcff}
+.csv-panel .flex h2{color:#1d4ed8}
+.csv-upload-zone{padding:17px 19px;margin:16px 0;border:2px dashed #93c5fd;border-radius:10px;background:#eff6ff}
+.csv-upload-zone label{color:#1e40af;font-size:14px}
+.csv-upload-zone input{background:white}
+.csv-map-grid{margin:13px 0}
+.csv-summary{background:#eefbf2;border-left:4px solid #16a34a;color:#14532d;padding:13px;border-radius:5px;margin:16px 0;font-weight:600}
+.csv-warning{background:#fffbeb;color:#92400e;border-left-color:#f59e0b}
+#csvPreview table{margin-top:10px}
+#csvPreview tr:nth-child(even){background:#f8fafc}
+#csvPreview thead{color:#334155}
+#csvClassFilterArea{padding:10px 13px;background:#fff7e6;border:1px solid #fde68a;border-radius:7px;margin:13px 0}
+.csv-confirm-row{margin-top:17px}
+#confirmCsvImport{background:#16a34a;border-color:#16a34a}
+#confirmCsvImport:hover{background:#15803d}
+#confirmCsvImport:disabled{background:#d1d5db;border-color:#d1d5db;color:#64748b}
+#csvImportMessage{margin:14px 0 0}
+#csvImportMessage.success{color:#166534;font-weight:600}
+#csvImportMessage.failure{color:#b91c1c}
+#students .printSingleCode{color:#6d28d9;background:#f5f3ff;border-color:#ddd6fe}
+#students .printSingleCode:hover{background:#ede9fe}
+#ecoPrintSheet{display:none}
+@page{size:A4 portrait;margin:10mm}
+@media print{
+ html,body{margin:0!important;padding:0!important;background:#fff!important;color:#1e293b!important}
+ body>*:not(#ecoPrintSheet){display:none!important}
+ #ecoPrintSheet{display:block!important;width:190mm;font-family:Arial,Helvetica,sans-serif}
+ #ecoPrintSheet .printPage{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(4,61mm);gap:4mm;width:190mm;break-after:page;page-break-after:always}
+ #ecoPrintSheet .printPage:last-child{break-after:auto;page-break-after:auto}
+ #ecoPrintSheet .printCard{border:1.4px dashed #a9a9bc;border-radius:3mm;box-sizing:border-box;padding:7mm 6mm;display:flex;flex-direction:column;justify-content:space-between;min-width:0;overflow:hidden;break-inside:avoid;background:#fff}
+ #ecoPrintSheet .printBrand{font-size:16pt;font-weight:800;letter-spacing:-.3pt}
+ #ecoPrintSheet .printBrand .eco{color:#147b66}#ecoPrintSheet .printBrand .quiz{color:#b95288}
+ #ecoPrintSheet .printClass{font-size:9pt;font-weight:700;text-transform:uppercase;letter-spacing:1pt;color:#475569;margin-top:2mm}
+ #ecoPrintSheet .printName{font-weight:700;font-size:12pt;overflow-wrap:anywhere;margin-top:3mm}
+ #ecoPrintSheet .printCode{background:#f2edfc;border:1px solid #d9c5f5;border-radius:2mm;text-align:center;padding:2.7mm 1mm;font:800 17pt monospace;letter-spacing:1.6pt;color:#4c1d95;white-space:nowrap}
+ #ecoPrintSheet .printHelp{font-size:8pt;color:#55536a;text-align:center;margin-top:1mm}
+}
+@media(max-width:650px){.roster-heading .row{width:100%;gap:7px}.roster-heading .row button{flex:1}.csv-upload-zone{padding:12px}}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span><button class="secondary hide" id="logout">Déconnexion</button></div></header>
 <main>
@@ -103,7 +150,37 @@ button.classTile:hover{background:white;border-color:#c8b3e4;transform:translate
  <div class="card"><div class="flex"><h2 id="classTitle"></h2><button class="secondary" id="back">← Mes classes</button></div><p id="classSummary" class="muted"></p>
  <div class="grid"><div><h3>Ajouter un élève</h3><form id="addStudent" class="row"><input id="studentName" placeholder="Prénom et NOM" maxlength="100" required><button type="submit">Ajouter</button></form><p class="muted">Chaque élève reçoit un code personnel stable à utiliser pour tous les quiz de cette classe.</p></div><div><h3>Créer un quiz ou un test</h3><p class="muted">Choisis un titre, compose les questions et publie un QR code spécifique.</p><div class="row"><button id="newQuiz">+ Nouveau quiz / test</button><button type="button" class="importAction" id="importQuiz">⧉ Copier un quiz existant</button></div></div></div>
  </div>
- <div class="card"><h2>Liste des élèves</h2><div id="students" class="table"></div></div>
+ <div class="card" id="rosterCard">
+ <div class="flex roster-heading">
+  <div><h2>Liste des élèves</h2><p class="muted">Les codes restent identiques pour tous les quiz de cette classe.</p></div>
+  <div class="row"><button type="button" class="csvImportButton" id="openCsvImport">↥ Importer CSV Pronote</button><button type="button" class="printRosterButton" id="printAllCodes">▤ Imprimer les codes A4</button></div>
+ </div>
+ <div id="students" class="table"></div>
+ </div>
+ <div class="card csv-panel hide" id="csvImportPanel" aria-label="Importer des élèves depuis un fichier CSV">
+  <div class="flex"><div><h2>Importer les élèves depuis Pronote</h2><p class="muted">Le CSV reste sur cet appareil. Seuls les noms et prénoms validés sont enregistrés dans ta classe.</p></div><button type="button" class="secondary" id="closeCsvImport">Fermer</button></div>
+  <div class="csv-upload-zone"><label for="csvInput">Sélectionner un export CSV Pronote</label><input id="csvInput" type="file" accept=".csv,text/csv,.txt,text/plain" aria-describedby="csvFileHint"><p id="csvFileHint" class="muted">Formats CSV UTF-8, ANSI/Windows-1252 ou Excel (avec séparateur « ; », « , » ou tabulation).</p></div>
+  <div id="csvMapping" class="hide">
+   <h3>Vérifier les colonnes</h3>
+   <div class="grid">
+    <div><label for="csvNameMode">Présentation des noms</label><select id="csvNameMode"><option value="separate">Colonnes « Nom » et « Prénom » séparées</option><option value="combined">Une colonne « Nom Prénom »</option></select></div>
+    <div><label for="csvSkipRows">Première ligne contenant un élève</label><select id="csvSkipRows"></select></div>
+   </div>
+   <div id="csvSeparateColumns" class="grid csv-map-grid">
+    <div><label for="csvLastCol">Colonne Nom</label><select id="csvLastCol"></select></div>
+    <div><label for="csvFirstCol">Colonne Prénom</label><select id="csvFirstCol"></select></div>
+   </div>
+   <div id="csvCombinedColumn" class="hide"><label for="csvFullCol">Colonne Nom et Prénom</label><select id="csvFullCol"></select></div>
+   <div id="csvClassFilterArea" class="hide">
+    <label for="csvClassFilter">Classe à importer si le fichier en contient plusieurs</label>
+    <select id="csvClassFilter"></select>
+   </div>
+   <div id="csvSummary" class="csv-summary" aria-live="polite"></div>
+   <div id="csvPreview" class="table"></div>
+   <div class="row csv-confirm-row"><button type="button" id="confirmCsvImport">✓ Importer les élèves affichés</button><button type="button" class="secondary" id="cancelCsvImport">Annuler</button></div>
+  </div>
+  <p id="csvImportMessage" class="muted" role="status" aria-live="polite"></p>
+ </div>
  <div class="card"><div class="flex"><h2>Chapitres et questions</h2><span class="muted">Quiz et tests de la classe</span></div><div id="quizList"></div></div>
 </div>
 <section class="card copy-panel hide" id="copyPanel" aria-label="Dupliquer un quiz">
@@ -138,7 +215,7 @@ async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=n
 el('reload').onclick=()=>loadClasses().catch(e=>alert(e.message));
 el('addClass').onsubmit=async e=>{e.preventDefault();const name=el('className').value.trim();if(!name)return;try{await req('ecoquiz_classes','POST',{name,academic_year:'2026-2027'});el('className').value='';await loadClasses()}catch(x){alert(x.message)}};
 async function openClass(id){selected=classes.find(c=>c.id===id);hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
-async function refreshSelected(){students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');quizzes=await req('ecoquiz_quizzes?select=id,title,published,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';el('students').innerHTML='<table><thead><tr><th>Élève</th><th>Code personnel</th></tr></thead><tbody>'+students.map(s=>'<tr><td>'+esc(s.display_name)+'</td><td><span class="code">'+esc(s.learner_code)+'</span></td></tr>').join('')+'</tbody></table>';el('quizList').innerHTML=quizzes.length?quizzes.map(q=>'<div class="quiz-row flex"><div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span><div><b>'+esc(q.title)+'</b><p class="muted">'+(q.published?'Publié · accessible aux élèves':'Brouillon · fermé')+'</p></div></div><div class="quiz-actions"><button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button><button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button></div></div>').join(''):'<p class="muted">Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.</p>';document.querySelectorAll('.openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));await loadHistory()}
+async function refreshSelected(){students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');quizzes=await req('ecoquiz_quizzes?select=id,title,published,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';el('students').innerHTML='<table><thead><tr><th>Élève</th><th>Code personnel</th><th>Carte individuelle</th></tr></thead><tbody>'+students.map(s=>'<tr><td>'+esc(s.display_name)+'</td><td><span class="code">'+esc(s.learner_code)+'</span></td><td><button type="button" class="secondary mini printSingleCode" data-student-id="'+s.id+'" aria-label="Imprimer le code personnel de '+esc(s.display_name)+'">Imprimer</button></td></tr>').join('')+'</tbody></table>';el('quizList').innerHTML=quizzes.length?quizzes.map(q=>'<div class="quiz-row flex"><div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span><div><b>'+esc(q.title)+'</b><p class="muted">'+(q.published?'Publié · accessible aux élèves':'Brouillon · fermé')+'</p></div></div><div class="quiz-actions"><button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button><button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button></div></div>').join(''):'<p class="muted">Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.</p>';document.querySelectorAll('.openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));await loadHistory()}
 el('back').onclick=()=>{hide('classDetails');hide('editor');hide('quizDetail');hide('longitudinal')};
 function randomCode(len=9){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(len);crypto.getRandomValues(a);return Array.from(a,x=>alphabet[x%alphabet.length]).join('')}
 el('addStudent').onsubmit=async e=>{e.preventDefault();const name=el('studentName').value.trim();if(!name)return;try{await req('ecoquiz_learners','POST',{display_name:name,learner_code:randomCode(),class_code:selected.name,class_id:selected.id});el('studentName').value='';await refreshSelected()}catch(x){alert(x.message)}};
@@ -185,4 +262,4 @@ async function openQuiz(id){quizSelected=quizzes.find(q=>q.id===id);show('quizDe
 async function renderQuizDetail(){const q=quizSelected;el('quizStatus').textContent=q.published?'Quiz ouvert':'Quiz fermé';el('togglePublish').textContent=q.published?'Fermer le quiz':'Partager · générer le QR code';el('togglePublish').onclick=async()=>{await req('ecoquiz_quizzes?id=eq.'+q.id,'PATCH',{published:!q.published});q.published=!q.published;await renderQuizDetail();await refreshSelected()};el('sharing').classList.toggle('hide',!q.published);if(q.published){const url=new URL('./participer.html',location.href);url.searchParams.set('code',q.join_code);el('joinCode').textContent=q.join_code;el('quizUrl').href=url.href;el('quizUrl').textContent=url.href;el('qrArea').innerHTML='';if(typeof QRCode==='function')new QRCode(el('qrArea'),{text:url.href,width:180,height:180});el('copyQuizLink').onclick=()=>navigator.clipboard.writeText(url.href)}await renderQuizResults()}
 async function renderQuizResults(){const q=quizSelected;if(!q)return;const qs=await req('ecoquiz_quiz_questions?select=id,prompt,options,correct_index,explanation,item_order&quiz_id=eq.'+q.id+'&order=item_order.asc');attempts=await req('ecoquiz_attempts?select=id,learner_id,score,max_score,completed_at&quiz_id=eq.'+q.id+'&order=completed_at.desc');let aResponses=[];if(attempts.length){const ids=attempts.map(a=>a.id).join(',');aResponses=await req('ecoquiz_attempt_responses?select=attempt_id,question_id,answer_index,is_correct&attempt_id=in.('+ids+')')}const byId=Object.fromEntries(students.map(s=>[s.id,s.display_name]));el('quizResults').innerHTML='<p>'+attempts.length+' participation(s)</p><table><thead><tr><th>Élève</th><th>Note</th><th>Date</th><th>Détail</th></tr></thead><tbody>'+attempts.map((a,i)=>'<tr><td>'+esc(byId[a.learner_id]||'Élève')+'</td><td>'+a.score+'/'+a.max_score+'</td><td>'+new Date(a.completed_at).toLocaleString('fr-FR')+'</td><td><button class="secondary mini seeAnswers" data-i="'+i+'">Réponses</button></td></tr>').join('')+'</tbody></table>';el('quizAnswers').innerHTML='';document.querySelectorAll('.seeAnswers').forEach(b=>b.onclick=()=>{const a=attempts[Number(b.dataset.i)];el('quizAnswers').innerHTML='<h3>'+esc(byId[a.learner_id]||'Élève')+' — '+a.score+'/'+a.max_score+'</h3>'+qs.map((x,i)=>{const ans=aResponses.find(y=>y.attempt_id===a.id&&y.question_id===x.id),good=ans?.is_correct;return '<div class="listItem" style="border-left:4px solid '+(good?'#55b88c':'#d88286')+'"><b>Q'+(i+1)+' — '+esc(x.prompt)+'</b><p>Réponse : '+esc(ans?x.options[ans.answer_index]:'Non répondu')+'</p><p>Bonne réponse : <b>'+esc(x.options[x.correct_index])+'</b></p><p class="muted">'+esc(x.explanation)+'</p></div>'}).join('');el('quizAnswers').scrollIntoView({block:'start',behavior:'smooth'})})}
 async function loadHistory(){const linked=await req('ecoquiz_attempts?select=learner_id,quiz_id,score,max_score,completed_at&order=completed_at.asc&limit=2000');const ids=new Set(students.map(s=>s.id)),relevant=linked.filter(a=>ids.has(a.learner_id));let out='<h3>Historique des résultats</h3><div class="table"><table><thead><tr><th>Élève</th><th>Évaluations passées</th><th>Moyenne</th></tr></thead><tbody>';for(const student of students){const s=relevant.filter(a=>a.learner_id===student.id);out+='<tr><td>'+esc(student.display_name)+'</td><td>'+s.length+'</td><td>'+(s.length?(s.reduce((x,a)=>x+a.score/a.max_score,0)/s.length*100).toFixed(0)+' %':'—')+'</td></tr>'}out+='</tbody></table></div>';el('history').innerHTML=out}
-</script><script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="./ai-editor.js?v=20261013-v2"></script><script src="./quiz-copy.js"></script></body></html>
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="./ai-editor.js?v=20261013-v2"></script><script src="./quiz-copy.js"></script><script src="./student-csv.js?v=20261013"></script><script src="./student-roster.js?v=20261013"></script></body></html>
