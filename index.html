@@ -67,6 +67,24 @@ tbody tr:last-child td{border-bottom:none}
 @media(max-width:600px){header{min-height:62px;padding:12px 15px}.brand{font-size:21px}header nav .light{padding:8px 10px}main{margin:16px auto;padding:0 12px}.grid{grid-template-columns:1fr}.card{padding:18px 16px;margin-bottom:12px}.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:11px}.stat strong{font-size:23px}h1{font-size:23px}#questionPanel h2{font-size:18px}}
 @media(prefers-reduced-motion:reduce){button{transition:none}}
 
+
+/* Analyses des élèves et de la classe */
+.analytics-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+.analytics-kpi{border:1px solid #e3eaef;background:#f7f9fa;padding:13px;border-radius:4px}
+.analytics-kpi strong{display:block;font-size:23px;font-weight:600;color:#293e50}
+.analytics-kpi small{display:block;color:#627583;font-size:12px}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:#617482;margin:10px 0}
+.dot{display:inline-block;width:12px;height:12px;border-radius:2px;vertical-align:middle;margin-right:4px}
+.ok{background:#91ddad}.wronganswer{background:#f3a8b3}.unanswered{background:#dce2e7}
+.matrix th,.matrix td{text-align:center;white-space:nowrap;padding:8px}
+.matrix th:first-child,.matrix td:first-child{position:sticky;left:0;text-align:left;z-index:1;background:white;min-width:150px}
+.matrix th:first-child{background:#f4f7f9}
+.matrix button{font-size:12px;padding:5px 7px}
+.answerbox{border:1px solid #e1e7eb;border-left:4px solid #65ac87;border-radius:3px;padding:12px;margin:8px 0}
+.answerbox.incorrect{border-left-color:#ce7784}
+.answerbox p{font-size:13px;margin:5px 0}
+#studentDetail{margin-top:20px;padding-top:16px;border-top:1px solid #e0e9ef}
+@media(max-width:600px){.analytics-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style></head><body><header><div class="brand">Éco<span>Quiz</span></div><nav class="row"><button class="light" id="openStudent">Élève</button><button class="light" id="openTeacher">Professeur</button></nav></header><main>
 <section id="student"><div class="card" id="welcome"><p class="muted">ÉCONOMIE-GESTION • 2BBE</p><h1>Besoins, biens, services et organisations</h1><p>10 questions • Note sur 10 et correction immédiate après validation.</p><div class="grid"><div><label for="last">Nom</label><input id="last" maxlength="80" autocomplete="family-name"></div><div><label for="first">Prénom</label><input id="first" maxlength="80" autocomplete="given-name"></div></div><p><button id="start">Commencer le quiz →</button></p><p class="muted small">Tes réponses et ton identité seront enregistrées pour permettre à ton professeur d'analyser les résultats.</p></div>
 <div class="card hide" id="questionPanel"><div class="row between"><span id="counter" class="muted"></span><span class="muted">2BBE</span></div><div class="progress"><div id="progress"></div></div><h2 id="question"></h2><div id="choices"></div><button id="next" disabled>Question suivante →</button><p class="muted small" id="saving"></p></div>
@@ -75,7 +93,7 @@ tbody tr:last-child td{border-bottom:none}
 <div id="dash" class="hide"><div class="card"><div class="row between"><div><p class="muted">ÉCOQUIZ • ESPACE PROFESSEUR</p><h1>Résultats 2BBE</h1></div><button class="light" id="signOut">Déconnexion</button></div><div class="stats" id="stats"></div><p><button id="refresh">Actualiser les résultats</button></p><p id="dashMsg" class="muted"></p></div>
 <div class="card"><h2>QR code de participation</h2><p class="muted">Projette ce QR code pour permettre aux élèves d'ouvrir le quiz depuis leur téléphone.</p><div id="qr"></div><p id="linkText" class="small"></p><button id="copy">Copier le lien</button></div>
 <div class="card"><h2>Taux de réussite par question</h2><div id="rates"></div></div>
-<div class="card"><div class="row between"><h2>Résultats individuels</h2><button id="export">Exporter CSV</button></div><div class="tablewrap"><table><thead><tr><th>Nom</th><th>Prénom</th><th>Note / 10</th><th>Durée</th><th>Date</th></tr></thead><tbody id="rows"></tbody></table></div></div></div></section></main>
+<div class="card"><h2>Analyse collective des réponses</h2><div class="analytics-grid" id="classMetrics"></div><div class="legend"><span><i class="dot ok"></i>Bonne réponse</span><span><i class="dot wronganswer"></i>Mauvaise réponse</span><span><i class="dot unanswered"></i>Non répondu</span></div><div class="tablewrap"><table class="matrix"><thead id="matrixHeader"></thead><tbody id="matrixRows"></tbody></table></div><p class="muted small">Chaque ligne correspond à une participation, y compris en cas de nouvelle tentative.</p></div><div class="card"><div class="row between"><h2>Résultats individuels</h2><button id="export">Exporter CSV</button></div><div class="tablewrap"><table><thead><tr><th>Nom</th><th>Prénom</th><th>Note / 10</th><th>Durée</th><th>Date</th><th>Analyse</th></tr></thead><tbody id="rows"></tbody></table></div><div id="studentDetail" class="hide"></div></div></div></section></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 'use strict';
@@ -107,7 +125,35 @@ async function authFetch(path,opts={}){const r=await fetch(URL_BASE+path,{...opt
 el('signIn').onclick=async()=>{el('loginError').classList.add('hide');el('signIn').disabled=true;try{const r=await fetch(URL_BASE+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:el('email').value.trim(),password:el('password').value})});const data=await r.json();if(!r.ok||!data.access_token)throw Error('Identifiants incorrects ou compte non autorisé');access=data.access_token;refreshToken=data.refresh_token;expiresAt=Date.now()+data.expires_in*1000;await refresh();el('login').classList.add('hide');el('dash').classList.remove('hide')}catch(e){el('loginError').textContent=e.message;el('loginError').classList.remove('hide');access=''}finally{el('signIn').disabled=false;el('password').value=''}};
 async function ensureAuth(){if(!access)throw Error('Veuillez vous reconnecter');if(Date.now()<expiresAt-60000)return;const r=await fetch(URL_BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refreshToken})});if(!r.ok)throw Error('Session expirée');const d=await r.json();access=d.access_token;refreshToken=d.refresh_token;expiresAt=Date.now()+d.expires_in*1000}
 async function refresh(){await ensureAuth();rows=await authFetch('/rest/v1/ecoquiz_results?select=last_name,first_name,answers,score,duration_seconds,created_at&order=created_at.desc&limit=1000');render()}
-function render(){const n=rows.length,total=rows.reduce((x,r)=>x+r.score,0),mean=n?(total/n).toFixed(1).replace('.',','):'—';el('stats').innerHTML='<div class="stat"><strong>'+n+'</strong>Participations</div><div class="stat"><strong>'+mean+'</strong>Moyenne / 10</div><div class="stat"><strong>'+(n?Math.round(rows.filter(r=>r.score>=5).length/n*100)+' %':'—')+'</strong>Notes ≥ 5/10</div>';el('rates').innerHTML=Q.map((q,i)=>{const ok=rows.filter(r=>Array.isArray(r.answers)&&r.answers[i]===q[2]).length,p=n?Math.round(ok/n*100):0;return '<div class="qitem"><small>Q'+(i+1)+'</small><div class="bar"><span style="width:'+p+'%"></span></div><b>'+p+' %</b></div>'}).join('');el('rows').innerHTML=rows.map(r=>'<tr><td>'+esc(r.last_name)+'</td><td>'+esc(r.first_name)+'</td><td>'+r.score+'/10</td><td>'+Math.floor(r.duration_seconds/60)+' min '+r.duration_seconds%60+' s</td><td>'+new Date(r.created_at).toLocaleString('fr-FR')+'</td></tr>').join('');el('dashMsg').textContent=n+' résultat(s) récupéré(s) depuis Supabase.'}
+
+function reportKpi(value,label){return '<div class="analytics-kpi"><strong>'+esc(value)+'</strong><small>'+esc(label)+'</small></div>'}
+function percent(a,b){return b?Math.round(a/b*100)+' %':'—'}
+function render(){
+ const n=rows.length;
+ const avg=n?(rows.reduce((s,r)=>s+r.score,0)/n).toFixed(1).replace('.',','):'—';
+ el('stats').innerHTML='<div class="stat"><strong>'+n+'</strong>Participations</div><div class="stat"><strong>'+avg+'</strong>Moyenne / 10</div><div class="stat"><strong>'+percent(rows.filter(r=>r.score>=5).length,n)+'</strong>Notes ≥ 5/10</div>';
+ const rates=Q.map((q,i)=>{const attempted=rows.filter(r=>Number.isInteger(r.answers?.[i])).length,good=rows.filter(r=>r.answers?.[i]===q[2]).length;return {i,attempted,good}});
+ el('rates').innerHTML=rates.map(x=>'<div class="qitem"><small>Q'+(x.i+1)+'</small><div class="bar"><span style="width:'+(x.attempted?Math.round(100*x.good/x.attempted):0)+'%"></span></div><b>'+percent(x.good,x.attempted)+'</b></div>').join('');
+ el('rows').innerHTML=rows.map((r,i)=>'<tr><td>'+esc(r.last_name)+'</td><td>'+esc(r.first_name)+'</td><td>'+r.score+'/10</td><td>'+Math.floor(r.duration_seconds/60)+' min '+r.duration_seconds%60+' s</td><td>'+new Date(r.created_at).toLocaleString('fr-FR')+'</td><td><button class="light view-student" data-i="'+i+'">Détails</button></td></tr>').join('');
+ el('dashMsg').textContent=n+' résultat(s) récupéré(s) depuis Supabase.';
+ const answered=rows.reduce((s,r)=>s+Q.filter((q,i)=>Number.isInteger(r.answers?.[i])).length,0);
+ const correct=rates.reduce((s,x)=>s+x.good,0);
+ const sorted=rates.filter(x=>x.attempted).sort((a,b)=>a.good/a.attempted-b.good/b.attempted);
+ el('classMetrics').innerHTML=reportKpi(percent(correct,answered),'Réussite globale')+reportKpi(percent(answered,n*10),'Questions renseignées')+reportKpi(sorted.length?'Q'+(sorted[0].i+1):'—','Question la plus difficile')+reportKpi(sorted.length?'Q'+(sorted[sorted.length-1].i+1):'—','Question la mieux réussie');
+ el('matrixHeader').innerHTML='<tr><th>Élève</th>'+Q.map((q,i)=>'<th title="'+esc(q[0])+'">Q'+(i+1)+'</th>').join('')+'<th>Note</th></tr>';
+ el('matrixRows').innerHTML=n?rows.map((r,ri)=>'<tr><td><button class="light view-student" data-i="'+ri+'">'+esc(r.first_name)+' '+esc(r.last_name)+'</button></td>'+Q.map((q,i)=>{let a=r.answers?.[i],cl=!Number.isInteger(a)?'unanswered':a===q[2]?'ok':'wronganswer';return '<td title="'+esc(q[0])+'"><span class="dot '+cl+'"></span></td>'}).join('')+'<td>'+r.score+'/10</td></tr>').join(''):'<tr><td colspan="12">Aucune réponse enregistrée.</td></tr>';
+ document.querySelectorAll('.view-student').forEach(b=>b.addEventListener('click',()=>showStudent(Number(b.dataset.i))));
+}
+function showStudent(i){
+ const r=rows[i];if(!r)return;
+ const answered=Q.filter((q,j)=>Number.isInteger(r.answers?.[j])).length;
+ const correct=Q.filter((q,j)=>r.answers?.[j]===q[2]).length;
+ const d=el('studentDetail');d.classList.remove('hide');
+ d.innerHTML='<div class="row between"><h2>'+esc(r.first_name)+' '+esc(r.last_name)+' — détail des réponses</h2><button id="closeStudent" class="light">Fermer</button></div><div class="analytics-grid">'+reportKpi(r.score+'/10','Note')+reportKpi(percent(answered,10),'Questions répondues')+reportKpi(percent(correct,answered),'Réussite')+reportKpi(Math.floor(r.duration_seconds/60)+' min '+r.duration_seconds%60+' s','Durée')+'</div>'+
+ Q.map((q,j)=>{let a=r.answers?.[j],has=Number.isInteger(a),right=a===q[2];return '<div class="answerbox '+(right?'':'incorrect')+'"><strong>Q'+(j+1)+' · '+esc(q[0])+'</strong><p>Élève : '+esc(has?q[1][a]||'Réponse inconnue':'Non répondu')+' — '+(right?'✓ juste':'✕ incorrect')+'</p><p>Réponse attendue : <b>'+esc(q[1][q[2]])+'</b></p><p class="muted">'+esc(q[3])+'</p></div>'}).join('');
+ el('closeStudent').onclick=()=>d.classList.add('hide');
+ d.scrollIntoView({behavior:'smooth',block:'start'});
+}
 el('refresh').onclick=async()=>{try{await refresh()}catch(e){el('dashMsg').textContent=e.message}};
 el('signOut').onclick=()=>{access='';refreshToken='';rows=[];el('dash').classList.add('hide');el('login').classList.remove('hide')};
 const quizLink=location.origin+location.pathname;el('linkText').textContent=quizLink;el('copy').onclick=()=>navigator.clipboard.writeText(quizLink);
