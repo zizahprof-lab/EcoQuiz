@@ -93,7 +93,7 @@
         const nom=tidy(row[last]),prenom=tidy(row[first]);
         if(nom&&prenom)name=prenom+' '+nom;
       }
-      if(!name||name.length>100||name.length<3||!/[a-zA-ZÀ-ÿ]/.test(name)){
+      if(!name||name.length>100||name.length<3||name.split(' ').filter(Boolean).length<2||!/[a-zA-ZÀ-ÿ]/.test(name)){
         invalid++;continue;
       }
       const key=fold(name);
