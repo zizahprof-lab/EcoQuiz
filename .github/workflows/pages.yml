@@ -21,6 +21,17 @@ jobs:
         uses: actions/checkout@v4
       - name: Configure Pages
         uses: actions/configure-pages@v5
+      - name: Restore original EcoQuiz visual style
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          page = Path("index.html")
+          html = page.read_text(encoding="utf-8")
+          css = Path("legacy-ecoquiz.css").read_text(encoding="utf-8")
+          opening = html.index("<style>")
+          closing = html.index("</style>", opening) + len("</style>")
+          page.write_text(html[:opening] + "<style>" + css + "</style>" + html[closing:], encoding="utf-8")
+          PY
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
