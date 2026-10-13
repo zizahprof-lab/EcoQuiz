@@ -29,6 +29,64 @@ button.classTile:hover{background:white;border-color:#c8b3e4;transform:translate
 .classTileTitle{display:block;padding:10px 12px 1px;font-size:16px;font-weight:700}
 .classTileMeta{display:block;padding:0 12px;color:#637485;font-size:12px}
 @media(prefers-reduced-motion:reduce){button.classTile:hover{transform:none}}
+
+/* ÉcoQuiz — éditeur pédagogique lumineux */
+#editor{border:1px solid #d7dafa;background:#fff;box-shadow:0 12px 34px #293b8a10;padding:26px}
+#editor>.flex:first-child{background:linear-gradient(110deg,#5146dc,#7c3aed 68%,#c026d3);color:#fff;margin:-26px -26px 24px;padding:19px 26px;border-radius:9px 9px 0 0}
+#editor>.flex:first-child h2{margin:0;color:white;font-size:22px;letter-spacing:-.4px}
+#editor>.flex:first-child .secondary{background:#fff;color:#4f46e5;border:0}
+#editor .ai-panel{background:linear-gradient(130deg,#f4efff,#fff2fa);border:1px solid #dfcdfc;border-left:5px solid #7c3aed;border-radius:11px;padding:20px 22px;margin-bottom:22px}
+#editor .ai-panel h3{font-size:18px;color:#6338c2;font-weight:700}
+#editor .ai-panel .muted{color:#5d5675}
+#editor #aiGenerate{background:#7c3aed;border:1px solid #7c3aed;box-shadow:0 3px 10px #7c3aed22}
+#editor #aiGenerate:hover{background:#5b21b6}
+#editor #aiMore{background:white;color:#7c3aed;border:1px solid #c6b3ff}
+#editor #aiMore:hover{background:#f6efff}
+#editor .title-label{color:#1d4ed8;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#editor #quizTitle{border:2px solid #93c5fd;background:#f3f8ff;font-weight:650;font-size:16px;padding:13px}
+#editor #quizTitle:focus-visible{outline:3px solid #bfdbfe;outline-offset:2px}
+.auto-title-tag{font-size:11px;color:#6d28d9;background:#f3e8ff;border:1px solid #ddd6fe;padding:4px 8px;border-radius:99px}
+.questions-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;color:#1d4ed8;font-size:20px;font-weight:750;border-bottom:3px solid #2563eb;padding:13px 2px 12px;margin:20px 0 18px}
+.question-total{font-size:12px;color:#fff;font-weight:700;border-radius:99px;padding:6px 11px;background:#2563eb;white-space:nowrap}
+#editor .quizQ{border:1px solid #c9d9fa;border-left:5px solid #2563eb;border-radius:10px;background:#fff;padding:22px;margin:0 0 17px;box-shadow:0 4px 15px #1d4ed80d}
+#editor .quizQ:nth-child(3n+2){border-left-color:#f59e0b;background:#fffef9}
+#editor .quizQ:nth-child(3n){border-left-color:#ef4444;background:#fffafb}
+#editor .quizQ>.flex:first-child{border-bottom:1px solid #e9edf8;padding-bottom:12px;margin-bottom:16px;gap:10px}
+#editor .quizQ>.flex:first-child>b{font-size:17px;color:#1e40af;display:inline-flex;align-items:center;gap:10px}
+#editor .quizQ>.flex:first-child>b::before{content:"?";background:#2563eb;color:white;display:inline-flex;align-items:center;justify-content:center;width:31px;height:31px;border-radius:8px;font-size:16px}
+#editor .quizQ:nth-child(3n+2)>.flex:first-child>b::before{background:#f59e0b;color:#532b00}
+#editor .quizQ:nth-child(3n)>.flex:first-child>b::before{background:#ef4444}
+#editor .quizQ label{color:#334155;font-size:12px;font-weight:700;margin:0 0 7px}
+#editor .quizQ textarea.prompt{border:1px solid #a9c4fd;background:#f8fbff;min-height:66px}
+#editor .quizQ .aiCardType{border:1px solid #ddd6fe;background:#faf7ff;color:#5725a3}
+#editor .questions-options{gap:11px;margin:14px 0}
+#editor .answer-option{position:relative;border:1px solid #d1dbe7;background:#f8fafc;border-radius:8px;padding:10px 12px 11px;transition:border-color .16s,background .16s}
+#editor .answer-option input{border-color:#cdd7e3;background:#fff}
+#editor .answer-option.is-correct{background:#dcfce7;border:2px solid #16a34a;padding:9px 11px 10px;box-shadow:0 3px 8px #15803d10}
+#editor .answer-option.is-correct input{background:#f0fdf4;border-color:#4ade80;color:#14532d;font-weight:700;padding-right:106px}
+#editor .answer-option.is-correct label{color:#166534}
+#editor .correct-badge{position:absolute;top:7px;right:10px;background:#15803d;color:white;border-radius:99px;padding:4px 8px;font-size:11px;font-weight:700;line-height:1.2}
+#editor .answer-option:not(.is-correct) .correct-badge{display:none}
+#editor .subject{display:block;margin:15px 0}
+#editor .answer-choice-control{max-width:360px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:13px 14px}
+#editor .answer-choice-control label{color:#166534;font-size:13px}
+#editor .answer-choice-control select{border:1px solid #86efac;background:#fff;color:#166534;font-weight:700}
+#editor .answer-tip{font-size:12px;color:#387c54;margin:8px 0 0}
+.valid-icon{background:#15803d;color:white;border-radius:50%;font-weight:700;font-size:11px;display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px}
+#editor .explanation-row{border:1px solid #fde68a;border-left:4px solid #f59e0b;border-radius:8px;background:#fffbeb;padding:13px;margin-top:14px}
+#editor .explanation-row label{color:#92400e}
+#editor .explanation-row textarea{background:#fffef9;border-color:#fcd34d}
+#editor .danger{border-color:#fecaca;color:#b91c1c;background:#fff1f2}
+#editor .danger:hover{background:#ffe4e6}
+#editor #addQuestion{border:1px solid #93c5fd;color:#1d4ed8;background:#eff6ff}
+#editor #addQuestion:hover{background:#dbeafe}
+#editor #saveQuiz{background:#2563eb;border-color:#2563eb;padding:12px 17px}
+#editor #saveQuiz:hover{background:#1d4ed8}
+#editor .tf-info{display:flex;align-items:center;gap:12px;background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #eab308;border-radius:8px;padding:12px 14px}
+#editor .tf-info .tf-icon{color:#7c2d12;font-weight:750;background:#fef08a;border-radius:5px;padding:7px;white-space:nowrap}
+#editor .tf-info strong{display:block;color:#92400e;font-size:13px}
+#editor .tf-info small{display:block;color:#854d0e;font-size:12px;margin-top:3px}
+@media(max-width:650px){#editor{padding:15px}#editor>.flex:first-child{margin:-15px -15px 18px;padding:17px}#editor .ai-panel{padding:14px}#editor .quizQ{padding:14px}#editor .questions-options{grid-template-columns:1fr}.questions-heading{font-size:18px}}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span><button class="secondary hide" id="logout">Déconnexion</button></div></header>
 <main>
@@ -55,7 +113,7 @@ button.classTile:hover{background:white;border-color:#c8b3e4;transform:translate
   <p id="copyMessage" class="muted" role="status" aria-live="polite"></p>
  </form>
 </section>
-<div class="card hide" id="editor"><div class="flex"><h2>Éditeur de quiz</h2><button class="secondary" id="closeEditor">Fermer</button></div><div class="ai-panel"><h3>✦ Assistant IA — création de quiz</h3><p class="muted">Importe ton cours ou colle ton contexte. L'IA propose un brouillon que tu corriges avant partage.</p><div class="grid"><div><label>Document (PDF, DOCX, TXT)</label><input id="aiFile" type="file" accept=".pdf,.docx,.txt,.md"><p id="aiFileInfo" class="muted">Texte extrait localement.</p></div><div><label>Nombre de questions</label><input id="aiCount" type="number" min="1" max="30" value="10"><label>Propositions par QCM</label><select id="aiOptions"><option value="3">3 réponses</option><option value="4" selected>4 réponses</option></select></div></div><p><label>Cours ou contexte</label><textarea id="aiSource" rows="7" maxlength="50000" placeholder="Colle le texte ici…"></textarea></p><p><label><input id="aiTF" type="checkbox" style="width:auto" checked> Inclure des Vrai / Faux</label></p><p><label>Consignes complémentaires</label><input id="aiExtra" maxlength="1200" placeholder="Ex. niveau seconde, situations professionnelles en institut"></p><div class="row"><button type="button" id="aiGenerate">✦ Générer une première version</button><button type="button" class="secondary" id="aiMore">+ Suggérer 3 questions</button></div><p id="aiMessage" class="muted" aria-live="polite"></p></div><label>Titre de l'évaluation</label><input id="quizTitle" maxlength="150" placeholder="Ex. Chapitre 2 — Le fonctionnement de l'entreprise"><h3>Questions</h3><div id="questionEditor"></div><div class="row"><button class="secondary" id="addQuestion">+ Question</button><button id="saveQuiz">Enregistrer le quiz</button></div><p id="editorMsg" class="muted"></p></div>
+<div class="card hide" id="editor"><div class="flex"><h2>Éditeur de quiz</h2><button class="secondary" id="closeEditor">Fermer</button></div><div class="ai-panel"><h3>✦ Assistant IA — création de quiz</h3><p class="muted">Importe ton cours ou colle ton contexte. L'IA propose un brouillon que tu corriges avant partage.</p><div class="grid"><div><label>Document (PDF, DOCX, TXT)</label><input id="aiFile" type="file" accept=".pdf,.docx,.txt,.md"><p id="aiFileInfo" class="muted">Texte extrait localement.</p></div><div><label>Nombre de questions</label><input id="aiCount" type="number" min="1" max="30" value="10"><label>Propositions par QCM</label><select id="aiOptions"><option value="3">3 réponses</option><option value="4" selected>4 réponses</option></select></div></div><p><label>Cours ou contexte</label><textarea id="aiSource" rows="7" maxlength="50000" placeholder="Colle le texte ici…"></textarea></p><p class="tf-info"><span class="tf-icon">V/F</span> <span><strong>Vrai / Faux intégrés automatiquement</strong><small>Environ 20 % des questions sont des affirmations à valider, avec réponses Vrai ou Faux.</small></span></p><p><label>Consignes complémentaires</label><input id="aiExtra" maxlength="1200" placeholder="Ex. niveau seconde, situations professionnelles en institut"></p><div class="row"><button type="button" id="aiGenerate">✦ Générer une première version</button><button type="button" class="secondary" id="aiMore">+ Suggérer 3 questions</button></div><p id="aiMessage" class="muted" aria-live="polite"></p></div><label class="title-label">Titre de l'évaluation <span class="auto-title-tag">✦ Proposé par l'IA</span></label><input id="quizTitle" maxlength="150" placeholder="Ex. Chapitre 2 — Le fonctionnement de l'entreprise"><h3 class="questions-heading"><span>Questions et réponses</span><span class="question-total" id="questionTotal">0 question</span></h3><div id="questionEditor"></div><div class="row"><button class="secondary" id="addQuestion">+ Question</button><button id="saveQuiz">✓ Valider mon quiz</button></div><p id="editorMsg" class="muted"></p></div>
 <div class="card hide" id="quizDetail"><div class="flex"><h2 id="quizDetailTitle"></h2><button id="closeQuizDetail" class="secondary">Fermer</button></div><div class="row"><span id="quizStatus" class="tag"></span><button id="togglePublish">Ouvrir aux élèves</button></div><div id="sharing" class="hide"><p>Code du quiz : <span id="joinCode" class="code"></span></p><div id="qrArea"></div><p><a id="quizUrl" href="#" target="_blank" rel="noopener"></a></p><button class="secondary" id="copyQuizLink">Copier le lien</button></div><h3>Résultats de cette évaluation</h3><div id="quizResults" class="table"></div><h3>Réponses détaillées</h3><div id="quizAnswers"></div></div>
 <div class="card hide" id="longitudinal"><h2>Parcours et ancrage par élève</h2><p class="muted">Dès que plusieurs quiz évaluent les mêmes notions à au moins sept jours d'intervalle, un indicateur d'ancrage peut apparaître. Une seule réussite ne suffit pas.</p><div id="history"></div></div>
 </section></main>
@@ -80,7 +138,7 @@ function randomCode(len=9){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=n
 el('addStudent').onsubmit=async e=>{e.preventDefault();const name=el('studentName').value.trim();if(!name)return;try{await req('ecoquiz_learners','POST',{display_name:name,learner_code:randomCode(),class_code:selected.name,class_id:selected.id});el('studentName').value='';await refreshSelected()}catch(x){alert(x.message)}};
 el('newQuiz').onclick=()=>{show('editor');hide('quizDetail');el('quizTitle').value='';el('questionEditor').innerHTML='';questionsCount=0;addQuestion();el('editor').scrollIntoView({behavior:'smooth'})};
 el('closeEditor').onclick=()=>hide('editor');
-function addQuestion(){const i=questionsCount++,div=document.createElement('div');div.className='quizQ';div.dataset.qid=i;div.innerHTML='<div class="flex"><b>Question '+(i+1)+'</b><button class="danger mini removeQuestion" type="button">Retirer</button></div><p><label>Énoncé</label><textarea class="prompt" rows="2" maxlength="800" placeholder="Question ou affirmation vraie / fausse" required></textarea></p><div class="questions-options">'+[0,1,2,3].map(j=>'<div><label>Réponse '+(j+1)+'</label><input class="option" maxlength="300" placeholder="Choix '+(j+1)+'"></div>').join('')+'</div><div class="subject"><div><label>Notion</label><select class="concept"><option value="">Non classée</option>'+concepts.map(c=>'<option value="'+c.id+'">'+esc(c.title)+'</option>').join('')+'</select></div><div><label>Bonne réponse</label><select class="correct"><option value="0">Réponse 1</option><option value="1">Réponse 2</option><option value="2">Réponse 3</option><option value="3">Réponse 4</option></select></div><div><label>&nbsp;</label><span class="muted">1 seule</span></div></div><p><label>Explication après correction</label><textarea class="explanation" rows="2" maxlength="700"></textarea></p>';el('questionEditor').append(div);div.querySelector('.removeQuestion').onclick=()=>div.remove()}
+function addQuestion(){const i=questionsCount++,div=document.createElement('div');div.className='quizQ';div.dataset.qid=i;div.innerHTML='<div class="flex"><b>Question '+(i+1)+'</b><button class="danger mini removeQuestion" type="button">Retirer</button></div><p><label>Énoncé</label><textarea class="prompt" rows="2" maxlength="800" placeholder="Question ou affirmation vraie / fausse" required></textarea></p><div class="questions-options">'+[0,1,2,3].map(j=>'<div><label>Réponse '+(j+1)+'</label><input class="option" maxlength="300" placeholder="Choix '+(j+1)+'"></div>').join('')+'</div><div class="subject"><input class="concept" type="hidden" value=""><div class="answer-choice-control"><label>Bonne réponse <span class="valid-icon" aria-hidden="true">✓</span></label><select class="correct"><option value="0">Réponse 1</option><option value="1">Réponse 2</option><option value="2">Réponse 3</option><option value="3">Réponse 4</option></select><p class="answer-tip">La réponse validée est surlignée en vert.</p></div></div><p class="explanation-row"><label>Explication après correction</label><textarea class="explanation" rows="2" maxlength="700"></textarea></p>';el('questionEditor').append(div);div.querySelector('.removeQuestion').onclick=()=>div.remove()}
 el('addQuestion').onclick=()=>addQuestion();
 el('saveQuiz').onclick=async()=>{const title=el('quizTitle').value.trim(),list=[...el('questionEditor').querySelectorAll('.quizQ')];if(!title||!list.length){alert('Titre et questions obligatoires');return}const questions=[];for(const item of list){const prompt=item.querySelector('.prompt').value.trim(),opts=[...item.querySelectorAll('.option')].map(x=>x.value.trim()),correct=Number(item.querySelector('.correct').value),concept=item.querySelector('.concept').value,explanation=item.querySelector('.explanation').value.trim();if(!prompt||opts.some(x=>!x)){alert('Complète chaque énoncé et les 4 réponses');return}questions.push({prompt,options:opts,correct_index:correct,concept_id:concept||null,explanation})}if(questions.length>50){alert('Maximum 50 questions par quiz');return}el('saveQuiz').disabled=true;el('editorMsg').textContent='Enregistrement…';try{const inserted=await req('ecoquiz_quizzes','POST',{class_id:selected.id,title,class_code:selected.name,join_code:randomCode(8),published:false});const quiz=inserted[0];await req('ecoquiz_quiz_questions','POST',questions.map((q,i)=>({...q,quiz_id:quiz.id,item_order:i+1})));el('editorMsg').textContent='Quiz enregistré.';hide('editor');await refreshSelected();await openQuiz(quiz.id)}catch(e){el('editorMsg').textContent='Erreur : '+e.message}finally{el('saveQuiz').disabled=false}};
 el('closeQuizDetail').onclick=()=>hide('quizDetail');
