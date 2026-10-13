@@ -174,6 +174,41 @@ button.deleteConfirm:hover:not(:disabled){background:#b91c1c}
 button.deleteConfirm:disabled{background:#e5e7eb;color:#64748b;border-color:#e5e7eb;cursor:not-allowed}
 @media(max-width:650px){.deleteDialog{padding:19px}.deleteButtons button{flex:1}.ecoMenuPanel{right:0;min-width:185px}}
 @media print{.deleteOverlay,.ecoMenu,.classMenuSlot{display:none!important}}
+
+/* Liste élèves : compact, aperçu 3 élèves et masquage */
+#rosterCard.rosterCardCompact{padding:18px 22px 16px;border:1px solid #dce4f1;border-radius:12px}
+#rosterCard .roster-heading{margin-bottom:13px;align-items:center;gap:12px}
+#rosterCard .rosterTitle h2{margin:0;color:#182b49;font-size:19px;letter-spacing:-.3px}
+#rosterCard .rosterTitle>.row{gap:10px;align-items:center}
+#rosterCard .rosterTitle p{margin:3px 0 0}
+#rosterCard .rosterCount{display:inline-flex;align-items:center;justify-content:center;padding:3px 9px;background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-size:11px;font-weight:750;border-radius:99px;white-space:nowrap}
+#rosterCard .rosterActions{gap:7px}
+#rosterCard .rosterActions button{padding:8px 11px;font-size:12px}
+#rosterCard .rosterBar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:10px;padding:9px 11px;background:linear-gradient(100deg,#f2f5ff,#f9f5ff);border:1px solid #e1e6fa;border-radius:8px}
+#rosterCard .rosterViewSwitch{display:inline-flex;align-items:center;gap:3px;background:#fff;border:1px solid #dce4f1;border-radius:7px;padding:3px}
+#rosterCard button.rosterView{background:transparent;border:0;border-radius:5px;color:#52647d;font-size:12px;font-weight:700;padding:7px 10px;box-shadow:none;white-space:nowrap}
+#rosterCard button.rosterView:hover{background:#eef2ff;color:#4338ca}
+#rosterCard button.rosterView.is-active{background:#4f46e5;color:#fff;box-shadow:0 2px 7px #4f46e52b}
+#rosterCard .rosterViewStatus{font-size:12px;color:#64748b;font-weight:600}
+#rosterCard .rosterTable{margin:0}
+#rosterCard .rosterTable table{font-size:12px}
+#rosterCard .rosterTable thead th{background:#f1f5fb;color:#293e59;padding:8px 12px;font-size:12px}
+#rosterCard .rosterTable tbody td{padding:6px 12px;line-height:1.25;height:40px}
+#rosterCard .rosterTable tbody tr:last-child td{border-bottom:0}
+#rosterCard .rosterTable .code{font-size:12px;padding:4px 6px;white-space:nowrap}
+#rosterCard .rosterTable .printSingleCode{padding:5px 9px;font-size:11px}
+#rosterCard .rosterEmpty{margin:8px 0 2px;padding:8px 10px}
+#rosterCard .rosterMoreButton{display:block;width:100%;padding:10px;background:#f7f8ff;border:1px solid #e3e7fb;border-radius:0 0 8px 8px;color:#4f46e5;font-size:12px;font-weight:700;text-align:center}
+#rosterCard .rosterMoreButton:hover{background:#eef2ff}
+@media(max-width:650px){
+ #rosterCard.rosterCardCompact{padding:13px}
+ #rosterCard .rosterActions{width:100%}
+ #rosterCard .rosterActions button{flex:1}
+ #rosterCard .rosterBar{padding:8px;gap:6px}
+ #rosterCard button.rosterView{padding:6px 8px;font-size:11px}
+ #rosterCard .rosterTable thead th,#rosterCard .rosterTable tbody td{padding:7px 6px}
+ #rosterCard .rosterViewStatus{font-size:11px}
+}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span><button class="secondary hide" id="logout">Déconnexion</button></div></header>
 <main>
@@ -184,12 +219,20 @@ button.deleteConfirm:disabled{background:#e5e7eb;color:#64748b;border-color:#e5e
  <div class="card"><div class="flex"><h2 id="classTitle"></h2><div class="row"><span class="ecoMenu"><button type="button" class="moreOptions" title="Options de la classe" aria-label="Options de cette classe" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-current="class">Supprimer cette classe</button></span></span><button class="secondary" id="back">← Mes classes</button></div></div><p id="classSummary" class="muted"></p>
  <div class="grid"><div><h3>Ajouter un élève</h3><form id="addStudent" class="row"><input id="studentName" placeholder="Prénom et NOM" maxlength="100" required><button type="submit">Ajouter</button></form><p class="muted">Chaque élève reçoit un code personnel stable à utiliser pour tous les quiz de cette classe.</p></div><div><h3>Créer un quiz ou un test</h3><p class="muted">Choisis un titre, compose les questions et publie un QR code spécifique.</p><div class="row"><button id="newQuiz">+ Nouveau quiz / test</button><button type="button" class="importAction" id="importQuiz">⧉ Copier un quiz existant</button></div></div></div>
  </div>
- <div class="card" id="rosterCard">
+ <div class="card rosterCardCompact" id="rosterCard">
  <div class="flex roster-heading">
-  <div><h2>Liste des élèves</h2><p class="muted">Les codes restent identiques pour tous les quiz de cette classe.</p></div>
-  <div class="row"><button type="button" class="csvImportButton" id="openCsvImport">↥ Importer CSV Pronote</button><button type="button" class="printRosterButton" id="printAllCodes">▤ Imprimer les codes A4</button></div>
+  <div class="rosterTitle"><div class="row"><h2>Liste des élèves</h2><span class="rosterCount" id="rosterCount">0 élève</span></div><p class="muted">Un code personnel stable par élève pour tous les quiz.</p></div>
+  <div class="row rosterActions"><button type="button" class="csvImportButton" id="openCsvImport">↥ Importer CSV Pronote</button><button type="button" class="printRosterButton" id="printAllCodes">▤ Imprimer les codes A4</button></div>
  </div>
- <div id="students" class="table"></div>
+ <div class="rosterBar">
+  <div class="rosterViewSwitch" role="group" aria-label="Affichage de la liste des élèves">
+   <button type="button" class="rosterView" data-roster-mode="hidden" aria-pressed="false">Masquer</button>
+   <button type="button" class="rosterView" data-roster-mode="preview" aria-pressed="true">Réduire</button>
+   <button type="button" class="rosterView" data-roster-mode="all" aria-pressed="false">Tout afficher</button>
+  </div>
+  <span id="rosterViewStatus" class="rosterViewStatus" role="status" aria-live="polite">Aperçu de 3 élèves</span>
+ </div>
+ <div id="students" class="table rosterTable"></div>
  </div>
  <div class="card csv-panel hide" id="csvImportPanel" aria-label="Importer des élèves depuis un fichier CSV">
   <div class="flex"><div><h2>Importer les élèves depuis Pronote</h2><p class="muted">Le CSV reste sur cet appareil. Seuls les noms et prénoms validés sont enregistrés dans ta classe.</p></div><button type="button" class="secondary" id="closeCsvImport">Fermer</button></div>
@@ -258,8 +301,74 @@ el('logout').onclick=()=>{token='';refreshToken='';hide('app');hide('logout');sh
 async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?'<div class="classShelf">'+classes.map((c,i)=>'<div class="classTileShell"><button type="button" class="classTile classShade'+(i%4)+' openClass" data-id="'+c.id+'"><span class="classCover"><span class="classBook" aria-hidden="true">▤</span><span class="classTag">ÉCOQUIZ</span></span><span class="classTileTitle">'+esc(c.name)+'</span><span class="classTileMeta">'+esc(c.academic_year)+' · Voir les quiz →</span></button><span class="classMenuSlot"><span class="ecoMenu"><button type="button" class="moreOptions" aria-haspopup="true" aria-expanded="false" title="Options de cette classe" aria-label="Options de la classe '+esc(c.name)+'">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="class" data-delete-id="'+c.id+'">Supprimer la classe</button></span></span></span></div>').join('')+'</div>':'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
 el('reload').onclick=()=>loadClasses().catch(e=>alert(e.message));
 el('addClass').onsubmit=async e=>{e.preventDefault();const name=el('className').value.trim();if(!name)return;try{await req('ecoquiz_classes','POST',{name,academic_year:'2026-2027'});el('className').value='';await loadClasses()}catch(x){alert(x.message)}};
-async function openClass(id){selected=classes.find(c=>c.id===id);hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
-async function refreshSelected(){students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');quizzes=await req('ecoquiz_quizzes?select=id,title,published,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';el('students').innerHTML='<table><thead><tr><th>Élève</th><th>Code personnel</th><th>Carte individuelle</th></tr></thead><tbody>'+students.map(s=>'<tr><td>'+esc(s.display_name)+'</td><td><span class="code">'+esc(s.learner_code)+'</span></td><td><button type="button" class="secondary mini printSingleCode" data-student-id="'+s.id+'" aria-label="Imprimer le code personnel de '+esc(s.display_name)+'">Imprimer</button></td></tr>').join('')+'</tbody></table>';el('quizList').innerHTML=quizzes.length?quizzes.map(q=>'<div class="quiz-row flex"><div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span><div><b>'+esc(q.title)+'</b><p class="muted">'+(q.published?'Publié · accessible aux élèves':'Brouillon · fermé')+'</p></div></div><div class="quiz-actions"><button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button><button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button><span class="ecoMenu"><button type="button" class="moreOptions" title="Options du quiz" aria-label="Options du quiz '+esc(q.title)+'" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="quiz" data-delete-id="'+q.id+'">Supprimer ce quiz / test</button></span></span></div></div>').join(''):'<p class="muted">Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.</p>';document.querySelectorAll('.openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));await loadHistory()}
+async function openClass(id){selected=classes.find(c=>c.id===id);loadRosterMode();hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
+/* Affichage compact de la liste : état distinct pour chaque classe. */
+const ROSTER_MODES=new Set(['hidden','preview','all']);
+const ROSTER_PREVIEW_COUNT=3;
+let rosterMode='preview';
+function loadRosterMode(){
+ rosterMode='preview';
+ if(!selected?.id)return;
+ try{
+  const value=localStorage.getItem('ecoquiz-roster-view:'+selected.id);
+  if(ROSTER_MODES.has(value))rosterMode=value;
+ }catch(_){}
+}
+function setRosterMode(mode){
+ if(!ROSTER_MODES.has(mode))return;
+ rosterMode=mode;
+ if(selected?.id){
+  try{localStorage.setItem('ecoquiz-roster-view:'+selected.id,mode)}catch(_){}
+ }
+ renderRoster();
+}
+function rosterVisibleStudents(entries,mode){
+ if(mode==='hidden')return [];
+ if(mode==='preview')return entries.slice(0,ROSTER_PREVIEW_COUNT);
+ return entries;
+}
+function renderRoster(){
+ const count=students.length;
+ const shown=rosterVisibleStudents(students,rosterMode);
+ const box=el('students');
+ el('rosterCount').textContent=count+' élève'+(count>1?'s':'');
+ const status=el('rosterViewStatus');
+ status.textContent=rosterMode==='hidden'
+  ? 'Liste masquée · '+count+' élève'+(count>1?'s':'')+' enregistré'+(count>1?'s':'')
+  :rosterMode==='preview'&&count>ROSTER_PREVIEW_COUNT
+   ?'Aperçu · '+shown.length+' sur '+count+' élèves'
+   :rosterMode==='preview'
+    ?'Aperçu · '+count+' élève'+(count>1?'s':'')
+    :'Liste complète · '+count+' élève'+(count>1?'s':'');
+ document.querySelectorAll('#rosterCard [data-roster-mode]').forEach(button=>{
+  const active=button.dataset.rosterMode===rosterMode;
+  button.setAttribute('aria-pressed',String(active));
+  button.classList.toggle('is-active',active);
+ });
+ box.classList.toggle('hide',rosterMode==='hidden');
+ const oldFoot=el('rosterMore');
+ if(oldFoot)oldFoot.remove();
+ if(rosterMode==='hidden'){box.replaceChildren();return}
+ if(!count){
+  box.innerHTML='<p class="muted rosterEmpty">Aucun élève dans cette classe. Tu peux importer un CSV Pronote ou ajouter un élève.</p>';
+  return;
+ }
+ box.innerHTML='<table><thead><tr><th>Élève</th><th>Code personnel</th><th>Carte individuelle</th></tr></thead><tbody>'
+  +shown.map(s=>'<tr><td>'+esc(s.display_name)+'</td><td><span class="code">'+esc(s.learner_code)+'</span></td><td><button type="button" class="secondary mini printSingleCode" data-student-id="'+s.id+'" aria-label="Imprimer le code personnel de '+esc(s.display_name)+'">Imprimer</button></td></tr>').join('')
+  +'</tbody></table>';
+ if(rosterMode==='preview'&&count>ROSTER_PREVIEW_COUNT){
+  const more=document.createElement('button');
+  more.type='button';more.id='rosterMore';more.className='rosterMoreButton';
+  more.textContent='Voir les '+(count-ROSTER_PREVIEW_COUNT)+' autres élèves →';
+  more.addEventListener('click',()=>setRosterMode('all'));
+  box.after(more);
+ }
+}
+el('rosterCard').addEventListener('click',event=>{
+ const button=event.target.closest('[data-roster-mode]');
+ if(button)setRosterMode(button.dataset.rosterMode);
+});
+async function refreshSelected(){students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');quizzes=await req('ecoquiz_quizzes?select=id,title,published,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';renderRoster();el('quizList').innerHTML=quizzes.length?quizzes.map(q=>'<div class="quiz-row flex"><div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span><div><b>'+esc(q.title)+'</b><p class="muted">'+(q.published?'Publié · accessible aux élèves':'Brouillon · fermé')+'</p></div></div><div class="quiz-actions"><button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button><button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button><span class="ecoMenu"><button type="button" class="moreOptions" title="Options du quiz" aria-label="Options du quiz '+esc(q.title)+'" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="quiz" data-delete-id="'+q.id+'">Supprimer ce quiz / test</button></span></span></div></div>').join(''):'<p class="muted">Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.</p>';document.querySelectorAll('.openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));await loadHistory()}
 el('back').onclick=()=>{hide('classDetails');hide('editor');hide('quizDetail');hide('longitudinal')};
 function randomCode(len=9){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(len);crypto.getRandomValues(a);return Array.from(a,x=>alphabet[x%alphabet.length]).join('')}
 el('addStudent').onsubmit=async e=>{e.preventDefault();const name=el('studentName').value.trim();if(!name)return;try{await req('ecoquiz_learners','POST',{display_name:name,learner_code:randomCode(),class_code:selected.name,class_id:selected.id});el('studentName').value='';await refreshSelected()}catch(x){alert(x.message)}};
