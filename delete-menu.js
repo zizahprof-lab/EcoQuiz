@@ -152,6 +152,7 @@
   input.disabled=true;
   by('cancelDeletion').disabled=true;
   setError('');
+  let serverConfirmed=false;
   try{
    const result=await req('rpc/ecoquiz_delete_item','POST',{
     p_target_type:type,
@@ -159,6 +160,7 @@
     p_confirmation:preview.name
    });
    if(result?.deleted!==true)throw Error('La suppression n’a pas été confirmée par le serveur.');
+   serverConfirmed=true;
    busy=false;
    by('cancelDeletion').disabled=false;
    confirmButton.textContent='Supprimer définitivement';
@@ -197,6 +199,11 @@
    target.parentElement.append(notice);
    setTimeout(()=>notice.remove(),10000);
   }catch(error){
+   if(serverConfirmed){
+    busy=false;
+    alert('La suppression a bien été enregistrée, mais l’actualisation de l’écran a échoué. Recharge la page pour voir la liste à jour. Détail : '+error.message);
+    return;
+   }
    busy=false;
    input.disabled=false;
    by('cancelDeletion').disabled=false;
