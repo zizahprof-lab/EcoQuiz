@@ -53,8 +53,27 @@ by('aiFile').addEventListener('change',async()=>{
  try{const text=await getText(file);by('aiSource').value=text.slice(0,50000);by('aiFileInfo').textContent=file.name+' · '+text.length+' caractères extraits'+(text.length>50000?' (texte limité à 50 000 caractères)':'');}
  catch(e){by('aiFileInfo').textContent=e.message;}
 });
+async function checkGeminiStatus(){
+ say('Vérification de la connexion Gemini…');
+ try{
+  await auth();
+  const res=await fetch(BASE+'/functions/v1/ecoquiz-generate',{
+   method:'POST',
+   headers:{apikey:KEY,Authorization:'Bearer '+token,'Content-Type':'application/json'},
+   body:JSON.stringify({action:'status'})
+  });
+  const result=await res.json().catch(()=>({}));
+  if(!res.ok)throw Error(result.error||'Vérification indisponible.');
+  say(result.configured
+   ? '✓ Gemini est configuré sur Supabase. Importe un cours et clique sur « Générer une première version » pour tester la génération.'
+   : '⚠ Aucune clé Gemini trouvée dans Supabase : enregistre le secret GEMINI_API_KEY puis rouvre cet éditeur.');
+ }catch(e){
+  say('Vérification impossible : '+e.message);
+ }
+}
 by('newQuiz').addEventListener('click',()=>{
  by('aiMessage').textContent='';by('aiSource').value='';by('aiExtra').value='';by('aiFile').value='';by('aiFileInfo').textContent='Texte extrait localement.';
+ checkGeminiStatus();
 });
 async function generate(more){
  const source=by('aiSource').value.trim(),count=more?3:Number(by('aiCount').value);
