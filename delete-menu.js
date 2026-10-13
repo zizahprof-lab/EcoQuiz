@@ -1,12 +1,11 @@
 'use strict';
 /* ÉcoQuiz : suppression explicite et transactionnelle depuis les menus ⋮.
- * La suppression n'est déclenchée qu'après aperçu et ressaisie exacte du titre.
+ * La suppression n'est déclenchée qu'après confirmation explicite Oui/Non.
  */
 (()=>{
  const by=id=>document.getElementById(id);
  const overlay=by('deleteOverlay');
  if(!overlay)return;
- const input=by('deleteConfirmation');
  const confirmButton=by('confirmDeletion');
  const errorBox=by('deleteError');
  let current=null;
@@ -28,14 +27,13 @@
   current=null;
   overlay.classList.add('hide');
   document.body.style.removeProperty('overflow');
-  input.value='';
   errorBox.textContent='';
   confirmButton.disabled=true;
   if(returnFocus?.isConnected)returnFocus.focus({preventScroll:true});
   returnFocus=null;
  }
  function checkConfirmation(){
-  confirmButton.disabled=busy||!current?.preview||input.value!==current.preview.name;
+  confirmButton.disabled=busy||!current?.preview;
  }
  function setError(message){
   errorBox.textContent=message;
@@ -43,16 +41,11 @@
  }
  function impactText(preview){
   if(preview.type==='class'){
-   return 'La classe « '+preview.name+' » contient '+preview.students+' élève(s), '
-    +preview.quizzes+' quiz/test(s), '+preview.questions+' question(s) et '
-    +preview.attempts+' participation(s) ('+preview.responses+' réponse(s) enregistrée(s)). '
-    +'La suppression effacera ces éléments, leurs codes élèves et les résultats associés.';
+   return 'Seront supprimés : '+preview.students+' élève(s), '+preview.quizzes
+    +' quiz/test(s) et '+preview.attempts+' résultat(s).';
   }
-  return 'Le quiz/test « '+preview.name+' » contient '+preview.questions
-   +' question(s) et '+preview.attempts+' participation(s) ('
-   +preview.responses+' réponse(s) enregistrée(s)). '
-   +'Ses résultats et son QR code ne seront plus disponibles. '
-   +'Les autres quiz et les élèves de la classe seront conservés.';
+  return 'Seront supprimés : '+preview.questions+' question(s) et '
+   +preview.attempts+' résultat(s). Les autres quiz et élèves sont conservés.';
  }
  async function openDialog(type,id){
   if(busy||!['class','quiz'].includes(type)||!id)return;
@@ -63,12 +56,9 @@
   current={type,id,preview:null};
   overlay.classList.remove('hide');
   document.body.style.overflow='hidden';
-  by('deleteDialogTitle').textContent=type==='class'?'Supprimer cette classe ?':'Supprimer ce quiz / test ?';
-  by('deleteDialogDescription').textContent='Vérifie attentivement les données concernées avant toute suppression.';
+  by('deleteDialogTitle').textContent='Êtes-vous sûr ?';
+  by('deleteDialogDescription').textContent='Vérification de l’élément à supprimer…';
   by('deleteImpact').textContent='Vérification du nombre d’élèves, de questions et de résultats…';
-  by('deleteExactName').textContent='Chargement…';
-  input.value='';
-  input.disabled=true;
   confirmButton.disabled=true;
   setError('');
   try{
@@ -80,17 +70,14 @@
    if(preview.type!==type||preview.id!==id||typeof preview.name!=='string')throw Error('Aperçu de suppression incohérent.');
    current.preview=preview;
    by('deleteImpact').textContent=impactText(preview);
-   by('deleteExactName').textContent=preview.name;
    by('deleteDialogDescription').textContent=type==='class'
-    ?'Supprimer cette classe et toutes ses évaluations ?'
-    :'Supprimer définitivement cette évaluation ?';
-   input.disabled=false;
-   input.placeholder='Recopier exactement le nom ci-dessus';
-   input.focus({preventScroll:true});
+    ?'Voulez-vous supprimer la classe « '+preview.name+' » ?'
+    :'Voulez-vous supprimer le quiz/test « '+preview.name+' » ?';
+   checkConfirmation();
+   by('cancelDeletion').focus({preventScroll:true});
   }catch(error){
    if(serial!==requestNumber)return;
    by('deleteImpact').textContent='Impossible de vérifier les données liées à cette suppression.';
-   by('deleteExactName').textContent='—';
    setError('Suppression indisponible : '+error.message);
   }
  }
@@ -124,7 +111,6 @@
   if(!event.target.closest('.ecoMenu'))closeMenus();
  });
  by('cancelDeletion').addEventListener('click',closeDialog);
- input.addEventListener('input',checkConfirmation);
  overlay.addEventListener('click',event=>{
   if(event.target===overlay)closeDialog();
  });
@@ -144,12 +130,11 @@
  by('logout').addEventListener('click',()=>{if(!busy)closeDialog();closeMenus()});
 
  confirmButton.addEventListener('click',async()=>{
-  if(busy||!current?.preview||input.value!==current.preview.name)return;
+  if(busy||!current?.preview)return;
   const type=current.type,id=current.id,preview=current.preview;
   busy=true;
   confirmButton.disabled=true;
   confirmButton.textContent='Suppression en cours…';
-  input.disabled=true;
   by('cancelDeletion').disabled=true;
   setError('');
   let serverConfirmed=false;
@@ -163,7 +148,7 @@
    serverConfirmed=true;
    busy=false;
    by('cancelDeletion').disabled=false;
-   confirmButton.textContent='Supprimer définitivement';
+   confirmButton.textContent='Oui, supprimer';
    closeDialog();
 
    if(type==='class'){
@@ -205,9 +190,8 @@
     return;
    }
    busy=false;
-   input.disabled=false;
    by('cancelDeletion').disabled=false;
-   confirmButton.textContent='Supprimer définitivement';
+   confirmButton.textContent='Oui, supprimer';
    checkConfirmation();
    setError('La suppression a échoué : '+error.message+'. Aucun succès n’est confirmé.');
   }
