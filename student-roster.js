@@ -52,7 +52,7 @@
   if(index<0){box.classList.add('hide');return}
   const values=[...new Set(documentCSV.rows.slice(documentCSV.startRow)
    .map(row=>csv.tidy(row[index])).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr'));
-  if(values.length<2){
+  if(!values.length||(values.length===1&&csv.fold(values[0])===csv.fold(selected?.name||''))){
    box.classList.add('hide');
    return;
   }
