@@ -78,10 +78,70 @@ const observer=new MutationObserver(()=>{
 observer.observe(by('questionEditor'),{childList:true,subtree:true});
 document.querySelectorAll('#questionEditor .quizQ').forEach(prepareCard);
 renumberQuestions();
+/* CSV/TSV de cours : analyse locale, aucun envoi du fichier brut.
+   Le texte structuré extrait est le seul contenu transmis à Gemini,
+   après clic explicite sur « Générer ». */
+function decodeCSVText(bytes){
+ if(bytes[0]===0xFF&&bytes[1]===0xFE)return new TextDecoder('utf-16le').decode(bytes);
+ if(bytes[0]===0xFE&&bytes[1]===0xFF)return new TextDecoder('utf-16be').decode(bytes);
+ try{return new TextDecoder('utf-8',{fatal:true}).decode(bytes)}
+ catch{return new TextDecoder('windows-1252').decode(bytes)}
+}
+function csvToCourse(raw,filename){
+ let value=String(raw||'').replace(/^\uFEFF/,'');
+ if(!value.trim())throw Error('Le fichier CSV est vide.');
+ const sep=value.match(/^sep=([;,\t|])\r?\n/i);
+ if(sep)value=value.slice(sep[0].length);
+ const parser=window.EcoQuizCSV?.parseCSV;
+ if(typeof parser!=='function')throw Error('Le lecteur CSV n’est pas encore chargé. Actualise la page et réessaie.');
+ const choices=sep?[sep[1]]:[';',',','\t','|'];
+ let best=null;
+ for(const delimiter of choices){
+  let rows;
+  try{rows=parser(value,delimiter)}catch(e){continue}
+  if(!rows.length)continue;
+  const sample=rows.slice(0,Math.min(18,rows.length));
+  const widths=sample.map(row=>row.length);
+  const multi=widths.filter(w=>w>1).length;
+  const median=widths.slice().sort((a,b)=>a-b)[Math.floor(widths.length/2)]||1;
+  const consistent=widths.filter(w=>w===median).length;
+  const score=(multi?100:0)+multi*10+consistent*3+Math.min(median,15);
+  if(!best||score>best.score)best={delimiter,rows,score};
+ }
+ if(!best)throw Error('Ce fichier CSV ne contient aucune donnée lisible.');
+ const rows=best.rows.map(row=>row.map(cell=>String(cell||'').replace(/\s+/g,' ').trim()));
+ const width=Math.max(...rows.slice(0,30).map(row=>row.length));
+ const header=rows[0];
+ const cleanHeader=header.map((cell,i)=>cell||'Colonne '+(i+1));
+ const describe=[];
+ let dataRows=0;
+ for(let rowIndex=1;rowIndex<rows.length;rowIndex++){
+  const row=rows[rowIndex];
+  if(!row.some(Boolean))continue;
+  dataRows++;
+  const fields=row.map((cell,col)=>cell
+   ?(cleanHeader[col]||'Colonne '+(col+1))+': '+cell
+   :'').filter(Boolean);
+  describe.push('Ligne '+(rowIndex+1)+' — '+fields.join(' ; '));
+ }
+ // Pour un CSV à une ligne, transmettre les valeurs plutôt qu'une seule ligne d'en-têtes.
+ const content=rows.length===1
+  ?'Contenu : '+rows[0].filter(Boolean).join(' ; ')
+  :describe.join('\n');
+ const title='Document CSV : '+filename.replace(/\.(csv|tsv)$/i,'');
+ const extracted=[title,'Colonnes : '+cleanHeader.join(' | '),'Nombre de lignes de données : '+dataRows,content].join('\n');
+ if(extracted.trim().length<10)throw Error('Ce CSV ne contient pas de données exploitables.');
+ return {text:extracted,rows:dataRows,columns:width};
+}
 async function getText(file){
  if(file.size>12*1024*1024)throw Error('Fichier trop volumineux : maximum 12 Mo.');
  const ext=(file.name.split('.').pop()||'').toLowerCase();
  if(['txt','md'].includes(ext))return await file.text();
+ if(['csv','tsv'].includes(ext)){
+  const bytes=new Uint8Array(await file.arrayBuffer());
+  const extracted=csvToCourse(decodeCSVText(bytes),file.name);
+  return extracted.text;
+ }
  if(ext==='docx'){
   if(!window.mammoth)throw Error('Lecture Word indisponible. Copie le texte directement.');
   const data=await window.mammoth.extractRawText({arrayBuffer:await file.arrayBuffer()});return data.value;
@@ -96,13 +156,22 @@ async function getText(file){
   if(text.trim().length<120)throw Error('Ce PDF semble être un scan sans texte. Copie le texte du cours pour continuer.');
   return text;
  }
- throw Error('Format non pris en charge. Formats acceptés : PDF, DOCX, TXT, MD.');
+ throw Error('Format non pris en charge. Formats acceptés : PDF, DOCX, CSV, TSV, TXT et MD.');
 }
 by('aiFile').addEventListener('change',async()=>{
  const file=by('aiFile').files[0];if(!file)return;
- by('aiFileInfo').textContent='Lecture du document…';
- try{const text=await getText(file);by('aiSource').value=text.slice(0,50000);by('aiFileInfo').textContent=file.name+' · '+text.length+' caractères extraits'+(text.length>50000?' (texte limité à 50 000 caractères)':'');}
- catch(e){by('aiFileInfo').textContent=e.message;}
+ const info=by('aiFileInfo');
+ info.textContent='Lecture du document…';
+ try{
+  const text=await getText(file);
+  by('aiSource').value=text.slice(0,50000);
+  const type=/\.(csv|tsv)$/i.test(file.name)?'Tableau CSV chargé · ':'';
+  info.textContent='✓ '+type+file.name+' · '+text.length+' caractères extraits'
+   +(text.length>50000?' (contenu limité à 50 000 caractères)':'')
+   +'. Le contenu est visible dans la zone « Cours ou contexte ».';
+ }catch(e){
+  info.textContent='Import impossible : '+e.message;
+ }
 });
 async function checkGeminiStatus(){
  say('Vérification de la connexion Gemini…');
