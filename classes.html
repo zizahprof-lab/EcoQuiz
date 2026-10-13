@@ -209,6 +209,31 @@ button.deleteConfirm:disabled{background:#e5e7eb;color:#64748b;border-color:#e5e
  #rosterCard .rosterTable thead th,#rosterCard .rosterTable tbody td{padding:7px 6px}
  #rosterCard .rosterViewStatus{font-size:11px}
 }
+
+/* Menus ⋮ : renommer une classe */
+.ecoMenuPanel button.editMenuAction{display:block;text-align:left;width:100%;border:0;border-radius:6px;background:#fff;color:#4338ca;font-size:13px;padding:11px 12px;white-space:nowrap}
+.ecoMenuPanel button.editMenuAction:hover{background:#eef2ff;color:#312e81}
+.ecoMenuPanel button.editMenuAction:focus-visible{outline:3px solid #a5b4fc;outline-offset:1px}
+.ecoMenuPanel button.dangerMenuAction{border-top:1px solid #f1f5f9;border-radius:0 0 6px 6px}
+.renameOverlay{position:fixed;inset:0;z-index:2501;background:#0f172acc;display:flex;justify-content:center;align-items:center;padding:18px}
+.renameDialog{width:min(100%,510px);max-height:calc(100dvh - 36px);overflow-y:auto;background:#fff;border-radius:14px;padding:26px;box-shadow:0 18px 55px #0f172a44}
+.renameHeading{display:flex;align-items:start;gap:12px;margin-bottom:18px}
+.renameHeadingIcon{width:42px;height:42px;border-radius:10px;background:#e0e7ff;color:#4338ca;display:grid;place-items:center;font-size:24px;font-weight:700;flex-shrink:0}
+.renameHeading h2{margin:1px 0 5px;color:#3730a3;font-size:20px}
+.renameHeading p{margin:0}
+.renameCurrent{background:#f1f5f9;padding:12px;border-radius:8px;margin-bottom:19px;font-size:13px;color:#475569}
+.renameCurrent strong{color:#1e293b;margin-left:5px;overflow-wrap:anywhere}
+.renameDialog label{font-size:13px;margin-bottom:8px}
+#renameClassInput{font-size:16px;border:2px solid #c7d2fe;background:#f8faff;padding:13px}
+#renameClassInput:focus-visible{outline:3px solid #c7d2fe;outline-offset:1px}
+.renameHelp{font-size:12px;color:#166534;background:#f0fdf4;border-left:3px solid #22c55e;padding:10px 12px;margin:12px 0 8px;border-radius:4px}
+.renameError{color:#b91c1c;min-height:20px;font-size:13px;margin:8px 0}
+.renameActions{display:flex;flex-wrap:wrap;gap:9px;justify-content:flex-end}
+#confirmRename{background:#4f46e5;border-color:#4f46e5}
+#confirmRename:hover:not(:disabled){background:#4338ca}
+#confirmRename:disabled{background:#e2e8f0;border-color:#e2e8f0;color:#64748b}
+@media(max-width:650px){.renameDialog{padding:18px}.renameActions button{flex:1}.renameOverlay{padding:10px}}
+@media print{.renameOverlay{display:none!important}}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span><button class="secondary hide" id="logout">Déconnexion</button></div></header>
 <main>
@@ -216,7 +241,7 @@ button.deleteConfirm:disabled{background:#e5e7eb;color:#64748b;border-color:#e5e
 <section id="app" class="hide">
 <div class="card"><div class="flex"><div><h1>Mes classes</h1><p class="muted">Organise tes quiz, tests et réévaluations par classe.</p></div><button id="reload" class="secondary">Actualiser</button></div><form id="addClass" class="row"><input id="className" placeholder="Nom de la classe (ex. 2BBE, 1MCVA)" maxlength="100" style="max-width:330px" required><button type="submit">+ Créer une classe</button></form><div id="classList"></div></div>
 <div id="classDetails" class="hide">
- <div class="card"><div class="flex"><h2 id="classTitle"></h2><div class="row"><span class="ecoMenu"><button type="button" class="moreOptions" title="Options de la classe" aria-label="Options de cette classe" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-current="class">Supprimer cette classe</button></span></span><button class="secondary" id="back">← Mes classes</button></div></div><p id="classSummary" class="muted"></p>
+ <div class="card"><div class="flex"><h2 id="classTitle"></h2><div class="row"><span class="ecoMenu"><button type="button" class="moreOptions" title="Options de la classe" aria-label="Options de cette classe" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="editMenuAction" data-rename-current="class">✎ Renommer la classe</button><button type="button" class="dangerMenuAction" data-delete-current="class">Supprimer cette classe</button></span></span><button class="secondary" id="back">← Mes classes</button></div></div><p id="classSummary" class="muted"></p>
  <div class="grid"><div><h3>Ajouter un élève</h3><form id="addStudent" class="row"><input id="studentName" placeholder="Prénom et NOM" maxlength="100" required><button type="submit">Ajouter</button></form><p class="muted">Chaque élève reçoit un code personnel stable à utiliser pour tous les quiz de cette classe.</p></div><div><h3>Créer un quiz ou un test</h3><p class="muted">Choisis un titre, compose les questions et publie un QR code spécifique.</p><div class="row"><button id="newQuiz">+ Nouveau quiz / test</button><button type="button" class="importAction" id="importQuiz">⧉ Copier un quiz existant</button></div></div></div>
  </div>
  <div class="card rosterCardCompact" id="rosterCard">
@@ -287,6 +312,24 @@ button.deleteConfirm:disabled{background:#e5e7eb;color:#64748b;border-color:#e5e
   <div class="deleteButtons"><button type="button" class="secondary" id="cancelDeletion">Annuler</button><button type="button" class="deleteConfirm" id="confirmDeletion" disabled>Supprimer définitivement</button></div>
  </section>
 </div>
+
+<div class="renameOverlay hide" id="renameOverlay" role="presentation">
+ <form class="renameDialog" id="renameClassForm" role="dialog" aria-modal="true" aria-labelledby="renameTitle" aria-describedby="renameDescription">
+  <div class="renameHeading"><span class="renameHeadingIcon" aria-hidden="true">✎</span><div>
+    <h2 id="renameTitle">Renommer la classe</h2>
+    <p id="renameDescription" class="muted">Le nouveau nom sera mis à jour partout dans ÉcoQuiz.</p>
+  </div></div>
+  <div class="renameCurrent">Nom actuel : <strong id="renameOldName"></strong></div>
+  <label for="renameClassInput">Nouveau nom de la classe</label>
+  <input id="renameClassInput" type="text" maxlength="100" required autocomplete="off" placeholder="Ex. 2BBE – Groupe 1">
+  <p class="renameHelp">Les codes élèves, les quiz, les liens QR et les résultats restent inchangés.</p>
+  <p id="renameError" class="renameError" role="alert" aria-live="polite"></p>
+  <div class="renameActions">
+    <button type="button" class="secondary" id="cancelRename">Annuler</button>
+    <button type="submit" id="confirmRename" disabled>✓ Enregistrer le nouveau nom</button>
+  </div>
+ </form>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
 const BASE='https://gxqepioanisijaszucwz.supabase.co',KEY='sb_publishable_M1QcweNM2782kXp1LmhMNA_VKQBr8SK',el=id=>document.getElementById(id);
@@ -298,7 +341,7 @@ const req=async(path,method='GET',data)=>{await auth();const r=await fetch(BASE+
 const show=id=>el(id).classList.remove('hide'),hide=id=>el(id).classList.add('hide');
 el('login').onclick=async()=>{el('login').disabled=true;try{const r=await fetch(BASE+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:el('email').value.trim(),password:el('password').value})});const d=await r.json();if(!r.ok)throw Error('Identifiants incorrects');token=d.access_token;refreshToken=d.refresh_token;expiresAt=Date.now()+d.expires_in*1000;await loadClasses();concepts=await req('ecoquiz_concepts?select=id,title,code&order=title.asc');hide('authCard');show('app');show('logout');el('password').value=''}catch(e){notify(e.message,true)}finally{el('login').disabled=false}};
 el('logout').onclick=()=>{token='';refreshToken='';hide('app');hide('logout');show('authCard')};
-async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?'<div class="classShelf">'+classes.map((c,i)=>'<div class="classTileShell"><button type="button" class="classTile classShade'+(i%4)+' openClass" data-id="'+c.id+'"><span class="classCover"><span class="classBook" aria-hidden="true">▤</span><span class="classTag">ÉCOQUIZ</span></span><span class="classTileTitle">'+esc(c.name)+'</span><span class="classTileMeta">'+esc(c.academic_year)+' · Voir les quiz →</span></button><span class="classMenuSlot"><span class="ecoMenu"><button type="button" class="moreOptions" aria-haspopup="true" aria-expanded="false" title="Options de cette classe" aria-label="Options de la classe '+esc(c.name)+'">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="class" data-delete-id="'+c.id+'">Supprimer la classe</button></span></span></span></div>').join('')+'</div>':'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
+async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?'<div class="classShelf">'+classes.map((c,i)=>'<div class="classTileShell"><button type="button" class="classTile classShade'+(i%4)+' openClass" data-id="'+c.id+'"><span class="classCover"><span class="classBook" aria-hidden="true">▤</span><span class="classTag">ÉCOQUIZ</span></span><span class="classTileTitle">'+esc(c.name)+'</span><span class="classTileMeta">'+esc(c.academic_year)+' · Voir les quiz →</span></button><span class="classMenuSlot"><span class="ecoMenu"><button type="button" class="moreOptions" aria-haspopup="true" aria-expanded="false" title="Options de cette classe" aria-label="Options de la classe '+esc(c.name)+'">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="editMenuAction" data-rename-id="'+c.id+'">✎ Renommer la classe</button><button type="button" class="dangerMenuAction" data-delete-type="class" data-delete-id="'+c.id+'">Supprimer la classe</button></span></span></span></div>').join('')+'</div>':'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
 el('reload').onclick=()=>loadClasses().catch(e=>alert(e.message));
 el('addClass').onsubmit=async e=>{e.preventDefault();const name=el('className').value.trim();if(!name)return;try{await req('ecoquiz_classes','POST',{name,academic_year:'2026-2027'});el('className').value='';await loadClasses()}catch(x){alert(x.message)}};
 async function openClass(id){selected=classes.find(c=>c.id===id);loadRosterMode();hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
@@ -415,4 +458,4 @@ async function openQuiz(id){quizSelected=quizzes.find(q=>q.id===id);show('quizDe
 async function renderQuizDetail(){const q=quizSelected;el('quizStatus').textContent=q.published?'Quiz ouvert':'Quiz fermé';el('togglePublish').textContent=q.published?'Fermer le quiz':'Partager · générer le QR code';el('togglePublish').onclick=async()=>{await req('ecoquiz_quizzes?id=eq.'+q.id,'PATCH',{published:!q.published});q.published=!q.published;await renderQuizDetail();await refreshSelected()};el('sharing').classList.toggle('hide',!q.published);if(q.published){const url=new URL('./participer.html',location.href);url.searchParams.set('code',q.join_code);el('joinCode').textContent=q.join_code;el('quizUrl').href=url.href;el('quizUrl').textContent=url.href;el('qrArea').innerHTML='';if(typeof QRCode==='function')new QRCode(el('qrArea'),{text:url.href,width:180,height:180});el('copyQuizLink').onclick=()=>navigator.clipboard.writeText(url.href)}await renderQuizResults()}
 async function renderQuizResults(){const q=quizSelected;if(!q)return;const qs=await req('ecoquiz_quiz_questions?select=id,prompt,options,correct_index,explanation,item_order&quiz_id=eq.'+q.id+'&order=item_order.asc');attempts=await req('ecoquiz_attempts?select=id,learner_id,score,max_score,completed_at&quiz_id=eq.'+q.id+'&order=completed_at.desc');let aResponses=[];if(attempts.length){const ids=attempts.map(a=>a.id).join(',');aResponses=await req('ecoquiz_attempt_responses?select=attempt_id,question_id,answer_index,is_correct&attempt_id=in.('+ids+')')}const byId=Object.fromEntries(students.map(s=>[s.id,s.display_name]));el('quizResults').innerHTML='<p>'+attempts.length+' participation(s)</p><table><thead><tr><th>Élève</th><th>Note</th><th>Date</th><th>Détail</th></tr></thead><tbody>'+attempts.map((a,i)=>'<tr><td>'+esc(byId[a.learner_id]||'Élève')+'</td><td>'+a.score+'/'+a.max_score+'</td><td>'+new Date(a.completed_at).toLocaleString('fr-FR')+'</td><td><button class="secondary mini seeAnswers" data-i="'+i+'">Réponses</button></td></tr>').join('')+'</tbody></table>';el('quizAnswers').innerHTML='';document.querySelectorAll('.seeAnswers').forEach(b=>b.onclick=()=>{const a=attempts[Number(b.dataset.i)];el('quizAnswers').innerHTML='<h3>'+esc(byId[a.learner_id]||'Élève')+' — '+a.score+'/'+a.max_score+'</h3>'+qs.map((x,i)=>{const ans=aResponses.find(y=>y.attempt_id===a.id&&y.question_id===x.id),good=ans?.is_correct;return '<div class="listItem" style="border-left:4px solid '+(good?'#55b88c':'#d88286')+'"><b>Q'+(i+1)+' — '+esc(x.prompt)+'</b><p>Réponse : '+esc(ans?x.options[ans.answer_index]:'Non répondu')+'</p><p>Bonne réponse : <b>'+esc(x.options[x.correct_index])+'</b></p><p class="muted">'+esc(x.explanation)+'</p></div>'}).join('');el('quizAnswers').scrollIntoView({block:'start',behavior:'smooth'})})}
 async function loadHistory(){const linked=await req('ecoquiz_attempts?select=learner_id,quiz_id,score,max_score,completed_at&order=completed_at.asc&limit=2000');const ids=new Set(students.map(s=>s.id)),relevant=linked.filter(a=>ids.has(a.learner_id));let out='<h3>Historique des résultats</h3><div class="table"><table><thead><tr><th>Élève</th><th>Évaluations passées</th><th>Moyenne</th></tr></thead><tbody>';for(const student of students){const s=relevant.filter(a=>a.learner_id===student.id);out+='<tr><td>'+esc(student.display_name)+'</td><td>'+s.length+'</td><td>'+(s.length?(s.reduce((x,a)=>x+a.score/a.max_score,0)/s.length*100).toFixed(0)+' %':'—')+'</td></tr>'}out+='</tbody></table></div>';el('history').innerHTML=out}
-</script><script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="./ai-editor.js?v=20261013-v2"></script><script src="./quiz-copy.js"></script><script src="./student-csv.js?v=20261013-pronote3"></script><script src="./student-roster.js?v=20261013-pronote3"></script><script src="./delete-menu.js?v=20261013-2"></script></body></html>
+</script><script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="./ai-editor.js?v=20261013-v2"></script><script src="./quiz-copy.js"></script><script src="./student-csv.js?v=20261013-pronote3"></script><script src="./student-roster.js?v=20261013-pronote3"></script><script src="./delete-menu.js?v=20261013-2"></script><script src="./rename-class.js?v=20261013-1"></script></body></html>
