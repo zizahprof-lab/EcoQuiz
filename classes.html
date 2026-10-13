@@ -18,6 +18,17 @@ button.importAction:hover{background:#f4ecff}
 .copy-target{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
 .copy-buttons{margin-top:18px}
 @media(max-width:650px){.copy-target{grid-template-columns:1fr}.quiz-row{align-items:stretch}.quiz-actions{width:100%}.quiz-actions button{flex:1}}
+.classShelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:14px;margin-top:17px}
+button.classTile{text-align:left;display:block;background:white;border:1px solid #e4e8ee;padding:0 0 12px;border-radius:9px;overflow:hidden;color:#26394c;font-weight:400;box-shadow:0 2px 6px #22384b0b}
+button.classTile:hover{background:white;border-color:#c8b3e4;transform:translateY(-1px);box-shadow:0 4px 14px #75549b1a}
+.classCover{height:92px;display:flex;align-items:center;justify-content:center;position:relative}
+.classShade0 .classCover{background:#ddc5ff}.classShade1 .classCover{background:#b9e9f7}.classShade2 .classCover{background:#ffd0e8}.classShade3 .classCover{background:#ffe1a0}
+.classBook{font-size:43px;color:#7951ad;transform:rotate(-6deg);line-height:1}
+.classShade1 .classBook{color:#287c9c}.classShade2 .classBook{color:#bc4e83}.classShade3 .classBook{color:#a67819}
+.classTag{position:absolute;bottom:8px;right:8px;font-size:10px;background:#fff8;color:#425574;padding:3px 6px;border-radius:3px;letter-spacing:.3px;font-weight:700}
+.classTileTitle{display:block;padding:10px 12px 1px;font-size:16px;font-weight:700}
+.classTileMeta{display:block;padding:0 12px;color:#637485;font-size:12px}
+@media(prefers-reduced-motion:reduce){button.classTile:hover{transform:none}}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span><button class="secondary hide" id="logout">Déconnexion</button></div></header>
 <main>
@@ -59,7 +70,7 @@ const req=async(path,method='GET',data)=>{await auth();const r=await fetch(BASE+
 const show=id=>el(id).classList.remove('hide'),hide=id=>el(id).classList.add('hide');
 el('login').onclick=async()=>{el('login').disabled=true;try{const r=await fetch(BASE+'/auth/v1/token?grant_type=password',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({email:el('email').value.trim(),password:el('password').value})});const d=await r.json();if(!r.ok)throw Error('Identifiants incorrects');token=d.access_token;refreshToken=d.refresh_token;expiresAt=Date.now()+d.expires_in*1000;await loadClasses();concepts=await req('ecoquiz_concepts?select=id,title,code&order=title.asc');hide('authCard');show('app');show('logout');el('password').value=''}catch(e){notify(e.message,true)}finally{el('login').disabled=false}};
 el('logout').onclick=()=>{token='';refreshToken='';hide('app');hide('logout');show('authCard')};
-async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?classes.map(c=>'<div class="listItem flex"><div><b>'+esc(c.name)+'</b><div class="muted">'+esc(c.academic_year)+'</div></div><button class="secondary openClass" data-id="'+c.id+'">Gérer la classe →</button></div>').join(''):'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
+async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?'<div class="classShelf">'+classes.map((c,i)=>'<button type="button" class="classTile classShade'+(i%4)+' openClass" data-id="'+c.id+'"><span class="classCover"><span class="classBook" aria-hidden="true">▤</span><span class="classTag">ÉCOQUIZ</span></span><span class="classTileTitle">'+esc(c.name)+'</span><span class="classTileMeta">'+esc(c.academic_year)+' · Voir les quiz →</span></button>').join('')+'</div>':'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
 el('reload').onclick=()=>loadClasses().catch(e=>alert(e.message));
 el('addClass').onsubmit=async e=>{e.preventDefault();const name=el('className').value.trim();if(!name)return;try{await req('ecoquiz_classes','POST',{name,academic_year:'2026-2027'});el('className').value='';await loadClasses()}catch(x){alert(x.message)}};
 async function openClass(id){selected=classes.find(c=>c.id===id);hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
