@@ -119,56 +119,85 @@
   const status = document.getElementById('quizCsvStatus');
   const say = (message, error = false) => { status.textContent = message; status.classList.toggle('error', error); };
 
-  button.addEventListener('click', async () => {
-    const file = input.files?.[0];
-    if (!file) return say('Selectionne d’abord un fichier CSV de questions.', true);
-    if (!/\.(csv|txt)$/i.test(file.name)) return say('Format accepte : CSV (ou TXT tabule).', true);
-    if (file.size > 1024 * 1024) return say('Le CSV est trop volumineux (limite 1 Mo).', true);
-    button.disabled = true;
-    try {
-      const data = await file.arrayBuffer();
-      let content;
-      try { content = new TextDecoder('utf-8', {fatal:true}).decode(data); }
-      catch { content = new TextDecoder('windows-1252').decode(data); }
-      const items = parseCsvQuiz(content);
-      const container = document.getElementById('questionEditor');
-      const current = [...container.querySelectorAll('.quizQ')];
-      const placeholder = current.length === 1 && !current[0].querySelector('.prompt')?.value.trim() &&
-        [...current[0].querySelectorAll('.option')].every(x => !x.value.trim());
-      if (current.length - (placeholder ? 1 : 0) + items.length > 50)
-        throw Error('Limite de 50 questions : enleve quelques questions avant l’import.');
-      if (placeholder) current[0].remove();
-      for (const question of items) {
-        if (typeof addQuestion !== 'function') throw Error('Editeur indisponible : recharge la page.');
-        addQuestion();
-        // L'editeur transforme automatiquement la nouvelle carte (MutationObserver).
-        await Promise.resolve();
-        const card = [...container.querySelectorAll('.quizQ')].at(-1);
-        const type = card.querySelector('.aiCardType');
-        if (!type) throw Error('Impossible de preparer les questions : recharge la page.');
-        type.value = String(question.options.length);
-        type.dispatchEvent(new Event('change', {bubbles:true}));
-        card.querySelector('.prompt').value = question.prompt;
-        [...card.querySelectorAll('.option')].forEach((input, i) => { input.value = question.options[i]; });
-        const correct = card.querySelector('.correct');
-        correct.value = String(question.correct_index);
-        correct.dispatchEvent(new Event('change', {bubbles:true}));
-        card.querySelector('.explanation').value = question.explanation;
-        card.dataset.conceptTitle = question.concept_title;
-      }
-      const title = document.getElementById('quizTitle');
-      if (!title.value.trim()) {
-        const base = file.name.replace(/\.(csv|txt)$/i,'').replace(/[_-]+/g,' ').trim();
-        title.value = ('Quiz - ' + base).slice(0,150);
-      }
-      const tf = items.filter(q => q.options.length === 2).length;
-      say(items.length + ' questions importees (' + (items.length - tf) + ' QCM, ' + tf + ' Vrai/Faux). Verifie le resultat puis clique sur « Valider mon quiz » pour enregistrer.');
-      container.scrollIntoView({behavior:'smooth',block:'start'});
-      input.value = '';
-    } catch (e) {
-      say('Import impossible : ' + e.message, true);
-    } finally {
-      button.disabled = false;
+
+  // Import de questions déjà validées dans ChatGPT, sans frais de génération.
+  const pastePanel=document.createElement('section');
+  pastePanel.className='quiz-csv-paste';
+  pastePanel.setAttribute('aria-label','Coller ma sélection de questions ChatGPT');
+  pastePanel.innerHTML='<h3>Importer ma sélection depuis ChatGPT</h3>'
+    +'<p class="muted">Dans ChatGPT : sélectionne « Garder » ou « Rejeter », puis clique sur « Copier pour ÉcoQuiz ». Colle la sélection ici : les réponses correctes et les explications seront préservées.</p>'
+    +'<textarea id="quizCsvPaste" rows="5" spellcheck="false" placeholder="Colle ici le tableau de questions copié depuis ChatGPT (CSV, séparateur point-virgule)…"></textarea>'
+    +'<div class="row"><button type="button" id="quizCsvPasteButton">✓ Ajouter les questions sélectionnées</button><span class="muted">Sans appel à Gemini et sans paiement</span></div>';
+  panel.append(pastePanel);
+  styleSheet.textContent += '.quiz-csv-paste{margin-top:16px;padding:17px 0 0;border-top:1px solid #c7d2fe}.quiz-csv-paste h3{color:#4f46e5;margin:0 0 7px}.quiz-csv-paste textarea{width:100%;min-height:118px;padding:12px;border:1.5px solid #a5b4fc;border-radius:8px;background:#fff;color:#27364b;font-size:12px}.quiz-csv-paste .row{margin-top:10px}.quiz-csv-paste button{background:#4f46e5;color:white;border-color:#4f46e5}.quiz-csv-paste button:hover{background:#4338ca}';
+
+  async function insertQuizQuestions(items, suggestedTitle) {
+    const container=document.getElementById('questionEditor');
+    const previous=[...container.querySelectorAll('.quizQ')];
+    const isPlaceholder=previous.length===1&&!previous[0].querySelector('.prompt')?.value.trim()&&
+      [...previous[0].querySelectorAll('.option')].every(x=>!x.value.trim());
+    const previousCount=previous.length-(isPlaceholder?1:0);
+    if(previousCount+items.length>50)
+      throw Error('Limite de 50 questions : retire quelques questions avant cet import.');
+    if(typeof addQuestion!=='function')
+      throw Error('Éditeur indisponible : recharge la page.');
+    if(isPlaceholder)previous[0].remove();
+    for(const question of items){
+      addQuestion();
+      await Promise.resolve(); // laisse l'assistant IA configurer QCM / Vrai-Faux
+      const card=[...container.querySelectorAll('.quizQ')].at(-1);
+      const format=card?.querySelector('.aiCardType');
+      if(!format)throw Error('Impossible de préparer la question, actualise la page.');
+      format.value=String(question.options.length);
+      format.dispatchEvent(new Event('change',{bubbles:true}));
+      card.querySelector('.prompt').value=question.prompt;
+      card.querySelectorAll('.option').forEach((input,i)=>{input.value=question.options[i]||''});
+      const select=card.querySelector('.correct');
+      select.value=String(question.correct_index);
+      select.dispatchEvent(new Event('change',{bubbles:true}));
+      card.querySelector('.explanation').value=question.explanation||'';
+      card.dataset.conceptTitle=question.concept_title||'';
     }
+    const title=document.getElementById('quizTitle');
+    if(!title.value.trim())title.value=String(suggestedTitle||'Quiz — Questions sélectionnées').slice(0,150);
+    const tf=items.filter(item=>item.options.length===2).length;
+    say('✓ '+items.length+' question(s) importée(s) : '+(items.length-tf)+' QCM et '+tf+' Vrai/Faux. Vérifie les bonnes réponses vertes puis enregistre le quiz.');
+    container.scrollIntoView({behavior:'smooth',block:'start'});
+  }
+
+  const pasteInput=document.getElementById('quizCsvPaste');
+  const pasteButton=document.getElementById('quizCsvPasteButton');
+  pasteButton.addEventListener('click',async()=>{
+    const text=pasteInput.value.trim();
+    if(!text)return say('Colle d’abord les questions copiées depuis ChatGPT.',true);
+    if(text.length>1000000)return say('Le contenu copié dépasse la limite de 1 Mo.',true);
+    pasteButton.disabled=true;
+    try{
+      const questions=parseCsvQuiz(text);
+      await insertQuizQuestions(questions,'Les agents économiques — Quiz validé');
+      pasteInput.value='';
+    }catch(e){
+      say('Import impossible : '+e.message,true);
+    }finally{pasteButton.disabled=false}
+  });
+
+  button.addEventListener('click',async()=>{
+    const file=input.files?.[0];
+    if(!file)return say('Sélectionne d’abord un CSV de questions.',true);
+    if(!/\.(csv|txt)$/i.test(file.name))return say('Seuls les fichiers .csv et .txt sont acceptés ici.',true);
+    if(file.size>1024*1024)return say('Fichier trop volumineux (maximum 1 Mo).',true);
+    button.disabled=true;
+    try{
+      const bytes=await file.arrayBuffer();
+      let source;
+      try{source=new TextDecoder('utf-8',{fatal:true}).decode(bytes)}
+      catch{source=new TextDecoder('windows-1252').decode(bytes)}
+      const questions=parseCsvQuiz(source);
+      const basename=file.name.replace(/\.(csv|txt)$/i,'').replace(/[_-]+/g,' ').trim();
+      await insertQuizQuestions(questions,'Quiz — '+basename);
+      input.value='';
+    }catch(e){
+      say('Import impossible : '+e.message,true);
+    }finally{button.disabled=false}
   });
 })();
