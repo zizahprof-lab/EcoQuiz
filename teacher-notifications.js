@@ -108,7 +108,15 @@
    const rows=await req(PATH);
    if(!active||current!==generation)return;
    if(!Array.isArray(rows))throw Error('Format des notifications incorrect');
-   history=rows;
+   // Trier l'historique par nom de famille (A-Z) et, pour un même élève,
+   // afficher les tentatives les plus récentes d'abord.
+   // Le suivi des nouveaux quiz continue à se baser sur les IDs et l'heure d'arrivée.
+   history=[...rows].sort((a,b)=>{
+    const nameA=a.ecoquiz_learners?.display_name||'';
+    const nameB=b.ecoquiz_learners?.display_name||'';
+    return ecoquizCompareFamilyNames(nameA,nameB)
+     ||(new Date(b.completed_at)-new Date(a.completed_at));
+   });
    if(!initialized){
     known=new Set(rows.map(r=>r.id));
     initialized=true;
