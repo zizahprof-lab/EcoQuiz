@@ -5,8 +5,8 @@
  */
 (()=>{
  const by=id=>document.getElementById(id);
- const excel=by('exportQuizExcel'),copy=by('copyQuizNotes'),status=by('pronoteExportStatus');
- if(!excel||!copy||!status)return;
+ const excel=by('exportQuizExcel'),csv=by('exportQuizCsv'),copy=by('copyQuizNotes'),status=by('pronoteExportStatus');
+ if(!excel||!csv||!copy||!status)return;
  let snapshot=null;
  const collator=new Intl.Collator('fr-FR',{sensitivity:'base',numeric:true});
  const upperWord=part=>{
@@ -93,7 +93,7 @@
  }
  function clear(){
   snapshot=null;
-  excel.disabled=true;copy.disabled=true;
+  excel.disabled=true;csv.disabled=true;copy.disabled=true;
   statusMessage('Ouvre les résultats d’un quiz pour préparer les notes.');
  }
  function setData({quiz,className,students,attempts}){
@@ -103,11 +103,47 @@
    students:Array.isArray(students)?students.map(s=>({...s})):[],
    attempts:Array.isArray(attempts)?attempts.map(a=>({...a})):[]
   };
-  excel.disabled=false;copy.disabled=false;
+  excel.disabled=false;csv.disabled=false;copy.disabled=false;
   const rows=rowsFrom(snapshot);
   const graded=rows.filter(r=>r.note!==null).length;
   statusMessage(graded+' élève'+(graded>1?'s':'')+' noté'+(graded>1?'s':'')+' sur '+rows.length+
    ' · ordre alphabétique par NOM · dernière tentative retenue · cases vides pour les élèves sans note.');
+ }
+ /* CSV français : point-virgule, virgule décimale, BOM UTF-8 pour Excel.
+  * Les noms garantissent qu'une ligne reste présente pour chaque élève,
+  * même si sa note est vide. */
+ function csvCell(value){
+  const raw=String(value??'');
+  const safe=/^[\s]*[=+@-]/.test(raw)?"'"+raw:raw;
+  return /[;"\r\n]/.test(safe)?'"'+safe.replace(/"/g,'""')+'"':safe;
+ }
+ function csvGrade(value){
+  if(value===null)return '';
+  return Number(value).toLocaleString('fr-FR',{maximumFractionDigits:2,useGrouping:false});
+ }
+ function buildCsvRows(rows){
+  return [
+   ['NOM','Prénom','Note /20'].join(';'),
+   ...rows.map(row=>[csvCell(row.family),csvCell(row.given),csvGrade(row.note)].join(';'))
+  ].join('\r\n')+'\r\n';
+ }
+ function exportCsv(){
+  try{
+   const {rows,title,className}=current();
+   if(!rows.length)throw Error('Cette classe ne contient pas encore d’élèves.');
+   const contents='\uFEFF'+buildCsvRows(rows);
+   const blob=new Blob([contents],{type:'text/csv;charset=utf-8'});
+   const fileUrl=URL.createObjectURL(blob);
+   const link=document.createElement('a');
+   link.href=fileUrl;
+   link.download='EcoQuiz_'+fileName(className)+'_'+fileName(title)+'_PRONOTE_notes_sur_20.csv';
+   link.hidden=true;
+   document.body.append(link);
+   link.click();
+   link.remove();
+   setTimeout(()=>URL.revokeObjectURL(fileUrl),5000);
+   statusMessage('CSV créé : NOM ; Prénom ; Note /20. Dans PRONOTE, privilégie la récupération des notes depuis le presse-papiers si le logiciel refuse l’import d’un fichier.');
+  }catch(e){statusMessage(e.message||'Échec de l’export CSV.',true)}
  }
  function exportExcel(){
   try{
@@ -162,7 +198,8 @@
   }catch(e){statusMessage(e.message||'Impossible de copier les notes.',true)}
  }
  excel.addEventListener('click',exportExcel);
+ csv.addEventListener('click',exportCsv);
  copy.addEventListener('click',copyGrades);
  clear();
- window.EcoQuizPronoteExport=Object.freeze({setData,clear,rowsFrom,notesForPronote,nameParts,gradeFromAttempt});
+ window.EcoQuizPronoteExport=Object.freeze({setData,clear,rowsFrom,notesForPronote,buildCsvRows,nameParts,gradeFromAttempt});
 })();
