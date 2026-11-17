@@ -315,6 +315,10 @@ button#copyQuizNotes:hover:not(:disabled){background:#eee8ff}
 .pronoteExportStatus{font-size:12px;color:#376b61;min-height:17px;margin:3px 0 12px;line-height:1.45}
 .pronoteExportStatus.error{color:#b91c1c}
 @media(max-width:650px){.pronoteExportButtons{width:100%;display:grid;grid-template-columns:1fr 1fr}.pronoteExportButtons button{font-size:11px;padding:8px 6px}}
+
+.quizShareDate{font-size:11px;font-weight:650;color:#237966;margin:6px 0 0;line-height:1.35}
+.quizShareDate::before{content:"◷";font-size:13px;color:inherit;margin-right:6px}
+.quizShareDate.estimated{font-weight:500;color:#7a6676}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span>
 <span id="teacherNotifArea" class="teacherNotifArea hide">
@@ -525,6 +529,20 @@ function quizOverviewStatus(q){
  if(q.ever_shared)return {key:'closed',label:'Déjà partagé · fermé'};
  return {key:'draft',label:'Non partagé'};
 }
+function quizOverviewDate(q){
+ if(!(q.published||q.ever_shared))return '';
+ const exact=q.first_shared_at ? new Date(q.first_shared_at) : null;
+ if(exact&&!Number.isNaN(exact.getTime())){
+  const day=exact.toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<div class="quizShareDate" title="Date enregistrée lors de la première publication">Première publication : '+day+'</div>';
+ }
+ const latestKnown=q.first_completion_at?new Date(q.first_completion_at):null;
+ if(latestKnown&&!Number.isNaN(latestKnown.getTime())){
+  const day=latestKnown.toLocaleDateString('fr-FR',{timeZone:'Europe/Paris',day:'2-digit',month:'2-digit',year:'numeric'});
+  return '<div class="quizShareDate estimated" title="La date exacte du premier partage n’a pas été enregistrée. Date de la première participation reçue.">Partagé au plus tard le '+day+'</div>';
+ }
+ return '<div class="quizShareDate estimated" title="Ce quiz avait déjà été partagé avant l’activation de l’historique des dates.">Date du partage non enregistrée</div>';
+}
 function quizOverviewCounts(rows){
  const totals=new Map();
  for(const row of rows){
@@ -533,9 +551,9 @@ function quizOverviewCounts(rows){
  }
  return totals;
 }
-async function quizOverviewReadAll(table,quizIds){
+async function quizOverviewReadAll(table,quizIds,fields='quiz_id'){
  if(!quizIds.length)return [];
- const base=table+'?select=quiz_id&quiz_id=in.('+quizIds.join(',')+')&limit=1000&offset=';
+ const base=table+'?select='+fields+'&quiz_id=in.('+quizIds.join(',')+')&limit=1000&offset=';
  const data=[];
  for(let offset=0;offset<100000;offset+=1000){
   const page=await req(base+offset);
@@ -575,7 +593,7 @@ function quizOverviewRender(){
     +'<span class="quizOverviewStatus '+status.key+'">'+status.label+'</span>'
     +'<span class="quizOverviewCount"><strong>'+count+'</strong> question'+(count===1?'':'s')+'</span>'
     +'<span class="quizOverviewCount">'+participants+' participation'+(participants===1?'':'s')+'</span>'
-    +'</div></div></div>'
+    +'</div>'+quizOverviewDate(q)+'</div></div>'
     +'<div class="quiz-actions">'
     +'<button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button>'
     +'<button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button>'
@@ -599,18 +617,26 @@ el('quizOverviewFilters').addEventListener('click',event=>{
 });
 async function refreshSelected(){
  students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');
- quizzes=await req('ecoquiz_quizzes?select=id,title,published,ever_shared,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');
+ quizzes=await req('ecoquiz_quizzes?select=id,title,published,ever_shared,first_shared_at,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');
  if(quizzes.length){
   const ids=quizzes.map(q=>q.id);
   const [questionRows,participationRows]=await Promise.all([
    quizOverviewReadAll('ecoquiz_quiz_questions',ids),
-   quizOverviewReadAll('ecoquiz_attempts',ids)
+   quizOverviewReadAll('ecoquiz_attempts',ids,'quiz_id,completed_at')
   ]);
   const questionCounts=quizOverviewCounts(questionRows);
   const participationCounts=quizOverviewCounts(participationRows);
+  const firstCompletions=new Map();
+  for(const attempt of participationRows){
+   if(!attempt.completed_at)continue;
+   const first=firstCompletions.get(attempt.quiz_id);
+   if(!first || new Date(attempt.completed_at)<new Date(first))
+    firstCompletions.set(attempt.quiz_id,attempt.completed_at);
+  }
   quizzes.forEach(q=>{
    q.question_count=questionCounts.get(q.id)||0;
    q.participation_count=participationCounts.get(q.id)||0;
+   q.first_completion_at=firstCompletions.get(q.id)||null;
   });
  }
  el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';
