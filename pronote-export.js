@@ -109,8 +109,9 @@
   statusMessage(graded+' élève'+(graded>1?'s':'')+' noté'+(graded>1?'s':'')+' sur '+rows.length+
    ' · ordre alphabétique par NOM · dernière tentative retenue · cases vides pour les élèves sans note.');
  }
- /* CSV français : point-virgule, virgule décimale, BOM UTF-8 pour Excel.
-  * Les noms garantissent qu'une ligne reste présente pour chaque élève,
+ /* CSV PRONOTE : une colonne « Nom et prénom » + une colonne « Note /20 ».
+  * Point-virgule, virgule décimale et BOM UTF-8 pour les accents.
+  * La liste garantit qu'une ligne reste présente pour chaque élève,
   * même si sa note est vide. */
  function csvCell(value){
   const raw=String(value??'');
@@ -123,8 +124,8 @@
  }
  function buildCsvRows(rows){
   return [
-   ['NOM','Prénom','Note /20'].join(';'),
-   ...rows.map(row=>[csvCell(row.family),csvCell(row.given),csvGrade(row.note)].join(';'))
+   ['Nom et prénom','Note /20'].join(';'),
+   ...rows.map(row=>[csvCell([row.family,row.given].filter(Boolean).join(' ')),csvGrade(row.note)].join(';'))
   ].join('\r\n')+'\r\n';
  }
  function exportCsv(){
@@ -136,13 +137,13 @@
    const fileUrl=URL.createObjectURL(blob);
    const link=document.createElement('a');
    link.href=fileUrl;
-   link.download='EcoQuiz_'+fileName(className)+'_'+fileName(title)+'_PRONOTE_notes_sur_20.csv';
+   link.download='EcoQuiz_'+fileName(className)+'_'+fileName(title)+'_PRONOTE_2_colonnes_notes_sur_20.csv';
    link.hidden=true;
    document.body.append(link);
    link.click();
    link.remove();
    setTimeout(()=>URL.revokeObjectURL(fileUrl),5000);
-   statusMessage('CSV créé : NOM ; Prénom ; Note /20. Dans PRONOTE, privilégie la récupération des notes depuis le presse-papiers si le logiciel refuse l’import d’un fichier.');
+   statusMessage('CSV PRONOTE créé : Nom et prénom ; Note /20. Dans PRONOTE, choisis « Autre » comme séparateur et saisis ; puis associe les deux colonnes (ignore la première ligne).');
   }catch(e){statusMessage(e.message||'Échec de l’export CSV.',true)}
  }
  function exportExcel(){
