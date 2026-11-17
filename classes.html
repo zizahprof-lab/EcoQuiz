@@ -277,6 +277,32 @@ button#teacherNotifRefresh{background:transparent;color:#4f46e5;border:0;padding
 button.teacherNotifToastOpen{background:#ede9fe;color:#4338ca;border:1px solid #c7d2fe;border-radius:6px;font-size:11px;padding:6px 9px}
 button.teacherNotifToastDismiss{border:0;background:transparent;color:#64748b;font-size:19px;padding:0 2px}
 @media(max-width:650px){.teacherNotifPanel{right:-65px}.teacherNotifToasts{right:9px;top:71px}.teacherNotifArea{margin-left:auto}}
+
+/* Vue synthétique des quiz : partage, nombre de questions et participations */
+.quizOverviewCard>.flex{align-items:start;gap:10px}
+.quizOverviewCard>.flex h2{margin:0 0 4px}
+.quizOverviewCard>.flex p{margin:0;font-size:12px}
+.quizOverviewTotal{font-size:12px;font-weight:700;color:#5b42a5;background:#f3efff;border:1px solid #e5d9fa;padding:8px 11px;border-radius:9px;white-space:nowrap}
+.quizOverviewFilters{display:flex;gap:7px;flex-wrap:wrap;margin:16px 0 8px}
+button.quizOverviewFilter{background:#f8f9fd;color:#536177;border:1px solid #e1e6ee;border-radius:8px;padding:9px 13px;font-size:12px;font-weight:700;box-shadow:none}
+button.quizOverviewFilter:hover{border-color:#b8a3ea;background:#f5f0ff;color:#6144a0}
+button.quizOverviewFilter.active{background:#ede8ff;color:#593ab3;border:1px solid #c7b6f5}
+.quizOverviewHelp{font-size:11px;color:#64748b;margin:3px 0 13px;line-height:1.4}
+.quizOverviewCard .quiz-row{border-color:#e5e4ee;padding:12px 15px;gap:12px}
+.quizOverviewCard .quiz-identity{align-items:center}
+.quizOverviewCard .quiz-identity>div{min-width:0;flex:1}
+.quizOverviewCard .quiz-identity b{line-height:1.4;display:block;font-size:13px;overflow-wrap:anywhere}
+.quizOverviewCard .quiz-identity p{margin:0}
+.quizOverviewMetadata{display:flex;align-items:center;flex-wrap:wrap;gap:7px 12px;margin-top:7px}
+.quizOverviewStatus{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;white-space:nowrap}
+.quizOverviewStatus::before{content:"";display:inline-block;width:7px;height:7px;flex:none;border-radius:50%;background:currentColor}
+.quizOverviewStatus.open{color:#138463}
+.quizOverviewStatus.closed{color:#b76d1d}
+.quizOverviewStatus.draft{color:#7453a5}
+.quizOverviewCount{font-size:11px;font-weight:600;color:#55667d;white-space:nowrap}
+.quizOverviewCount strong{font-size:12px;color:#293d57;font-weight:800}
+.quizOverviewEmpty{padding:18px 14px;text-align:center;background:#fbfbff;border:1px dashed #d9d2ed;border-radius:9px;color:#66748c;font-size:13px}
+@media(max-width:680px){.quizOverviewCard>.flex{flex-wrap:wrap}.quizOverviewTotal{white-space:normal}.quizOverviewFilters{gap:5px}button.quizOverviewFilter{flex:1;padding:8px 6px;font-size:11px}.quizOverviewCard .quiz-row{flex-direction:column;align-items:stretch}.quizOverviewCard .quiz-actions{width:100%}}
 </style></head><body>
 <header><strong>Éco<span style="color:#b95288">Quiz</span></strong><div class="row"><a href="./">Accueil</a><span class="muted">Gestion des classes et évaluations</span>
 <span id="teacherNotifArea" class="teacherNotifArea hide">
@@ -334,7 +360,16 @@ button.teacherNotifToastDismiss{border:0;background:transparent;color:#64748b;fo
   </div>
   <p id="csvImportMessage" class="muted" role="status" aria-live="polite"></p>
  </div>
- <div class="card"><div class="flex"><h2>Chapitres et questions</h2><span class="muted">Quiz et tests de la classe</span></div><div id="quizList"></div></div>
+ <div class="card quizOverviewCard" id="quizOverviewCard">
+ <div class="flex"><div><h2>Mes quiz et tests</h2><p class="muted">Retrouve les évaluations déjà partagées et celles encore en préparation.</p></div><span class="quizOverviewTotal" id="quizOverviewSummary" aria-live="polite"></span></div>
+ <div class="quizOverviewFilters" id="quizOverviewFilters" role="group" aria-label="Filtrer les quiz selon leur partage">
+  <button type="button" class="quizOverviewFilter active" data-quiz-filter="all" aria-pressed="true">Tous</button>
+  <button type="button" class="quizOverviewFilter" data-quiz-filter="shared" aria-pressed="false">Déjà partagés</button>
+  <button type="button" class="quizOverviewFilter" data-quiz-filter="unshared" aria-pressed="false">Non partagés</button>
+ </div>
+ <p class="quizOverviewHelp">Partagé = quiz rendu accessible par lien ou QR code, pas nécessairement envoyé à chaque élève.</p>
+ <div id="quizList" aria-live="polite"></div>
+</div>
 </div>
 <section class="card copy-panel hide" id="copyPanel" aria-label="Dupliquer un quiz">
  <div class="flex"><div><h2>⧉ Copier un quiz dans une classe</h2><p class="muted">Réutilise toutes ses questions et corrections. Chaque classe conservera ses propres réponses et statistiques.</p></div><button type="button" id="cancelCopy" class="secondary">Fermer</button></div>
@@ -383,6 +418,7 @@ button.teacherNotifToastDismiss{border:0;background:transparent;color:#64748b;fo
 <script>
 const BASE='https://gxqepioanisijaszucwz.supabase.co',KEY='sb_publishable_M1QcweNM2782kXp1LmhMNA_VKQBr8SK',el=id=>document.getElementById(id);
 let token='',refreshToken='',expiresAt=0,classes=[],selected=null,students=[],quizzes=[],quizSelected=null,questionsCount=0,concepts=[],attempts=[];
+let quizOverviewFilter='all';
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const notify=(msg,err=false)=>{el('authMessage').textContent=msg;el('authMessage').className=err?'notice error':'muted'};
 const auth=async()=>{if(!token)throw Error('Connexion nécessaire');if(Date.now()<expiresAt-60000)return;const r=await fetch(BASE+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:refreshToken})});if(!r.ok)throw Error('Session expirée');const d=await r.json();token=d.access_token;refreshToken=d.refresh_token;expiresAt=Date.now()+d.expires_in*1000};
@@ -393,7 +429,7 @@ el('logout').onclick=()=>{window.EcoQuizTeacherNotifications?.stop();token='';re
 async function loadClasses(){classes=await req('ecoquiz_classes?select=*&order=name.asc');el('classList').innerHTML=classes.length?'<div class="classShelf">'+classes.map((c,i)=>'<div class="classTileShell"><button type="button" class="classTile classShade'+(i%4)+' openClass" data-id="'+c.id+'"><span class="classCover"><span class="classBook" aria-hidden="true">▤</span><span class="classTag">ÉCOQUIZ</span></span><span class="classTileTitle">'+esc(c.name)+'</span><span class="classTileMeta">'+esc(c.academic_year)+' · Voir les quiz →</span></button><span class="classMenuSlot"><span class="ecoMenu"><button type="button" class="moreOptions" aria-haspopup="true" aria-expanded="false" title="Options de cette classe" aria-label="Options de la classe '+esc(c.name)+'">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="editMenuAction" data-rename-id="'+c.id+'">✎ Renommer la classe</button><button type="button" class="dangerMenuAction" data-delete-type="class" data-delete-id="'+c.id+'">Supprimer la classe</button></span></span></span></div>').join('')+'</div>':'<p class="muted">Aucune classe. Crée ta première classe ci-dessus.</p>';document.querySelectorAll('.openClass').forEach(b=>b.onclick=()=>openClass(b.dataset.id))}
 el('reload').onclick=()=>loadClasses().catch(e=>alert(e.message));
 el('addClass').onsubmit=async e=>{e.preventDefault();const name=el('className').value.trim();if(!name)return;try{await req('ecoquiz_classes','POST',{name,academic_year:'2026-2027'});el('className').value='';await loadClasses()}catch(x){alert(x.message)}};
-async function openClass(id){selected=classes.find(c=>c.id===id);loadRosterMode();hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
+async function openClass(id){selected=classes.find(c=>c.id===id);quizOverviewFilter='all';loadRosterMode();hide('editor');hide('quizDetail');show('classDetails');show('longitudinal');el('classTitle').textContent=selected.name;await refreshSelected();el('classDetails').scrollIntoView({block:'start',behavior:'smooth'})}
 /* Affichage compact de la liste : état distinct pour chaque classe. */
 const ROSTER_MODES=new Set(['hidden','preview','all']);
 const ROSTER_PREVIEW_COUNT=3;
@@ -460,7 +496,108 @@ el('rosterCard').addEventListener('click',event=>{
  const button=event.target.closest('[data-roster-mode]');
  if(button)setRosterMode(button.dataset.rosterMode);
 });
-async function refreshSelected(){students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');quizzes=await req('ecoquiz_quizzes?select=id,title,published,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';renderRoster();el('quizList').innerHTML=quizzes.length?quizzes.map(q=>'<div class="quiz-row flex"><div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span><div><b>'+esc(q.title)+'</b><p class="muted">'+(q.published?'Publié · accessible aux élèves':'Brouillon · fermé')+'</p></div></div><div class="quiz-actions"><button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button><button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button><span class="ecoMenu"><button type="button" class="moreOptions" title="Options du quiz" aria-label="Options du quiz '+esc(q.title)+'" aria-haspopup="true" aria-expanded="false">⋮</button><span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="quiz" data-delete-id="'+q.id+'">Supprimer ce quiz / test</button></span></span></div></div>').join(''):'<p class="muted">Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.</p>';document.querySelectorAll('.openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));await loadHistory()}
+
+/* Le statut "déjà partagé" reste vrai quand un quiz est refermé.
+   Ce suivi historique est enregistré côté Supabase. */
+function quizOverviewStatus(q){
+ if(q.published)return {key:'open',label:'Partagé · ouvert'};
+ if(q.ever_shared)return {key:'closed',label:'Déjà partagé · fermé'};
+ return {key:'draft',label:'Non partagé'};
+}
+function quizOverviewCounts(rows){
+ const totals=new Map();
+ for(const row of rows){
+  const key=row.quiz_id;
+  totals.set(key,(totals.get(key)||0)+1);
+ }
+ return totals;
+}
+async function quizOverviewReadAll(table,quizIds){
+ if(!quizIds.length)return [];
+ const base=table+'?select=quiz_id&quiz_id=in.('+quizIds.join(',')+')&limit=1000&offset=';
+ const data=[];
+ for(let offset=0;offset<100000;offset+=1000){
+  const page=await req(base+offset);
+  if(!Array.isArray(page))throw Error('Lecture des informations de quiz impossible.');
+  data.push(...page);
+  if(page.length<1000)return data;
+ }
+ throw Error('Trop de participations pour afficher des statistiques complètes.');
+}
+function quizOverviewRender(){
+ const total=quizzes.length;
+ const shared=quizzes.filter(q=>q.published||q.ever_shared).length;
+ el('quizOverviewSummary').textContent=shared+' déjà partagés · '+(total-shared)+' non partagés';
+ const captions={all:'Tous',shared:'Déjà partagés',unshared:'Non partagés'};
+ for(const button of el('quizOverviewFilters').querySelectorAll('[data-quiz-filter]')){
+  const current=button.dataset.quizFilter===quizOverviewFilter;
+  button.classList.toggle('active',current);
+  button.setAttribute('aria-pressed',String(current));
+  const key=button.dataset.quizFilter;
+  const count=key==='all'?total:key==='shared'?shared:total-shared;
+  button.textContent=captions[key]+' ('+count+')';
+ }
+ const view=quizzes.filter(q=>{
+  const isShared=Boolean(q.published||q.ever_shared);
+  return quizOverviewFilter==='all'
+    ||(quizOverviewFilter==='shared'&&isShared)
+    ||(quizOverviewFilter==='unshared'&&!isShared);
+ });
+ el('quizList').innerHTML=view.length?view.map(q=>{
+  const status=quizOverviewStatus(q);
+  const count=Number(q.question_count||0);
+  const participants=Number(q.participation_count||0);
+  return '<div class="quiz-row flex">'
+    +'<div class="quiz-identity"><span class="quiz-icon" aria-hidden="true">▤</span>'
+    +'<div><b>'+esc(q.title)+'</b>'
+    +'<div class="quizOverviewMetadata">'
+    +'<span class="quizOverviewStatus '+status.key+'">'+status.label+'</span>'
+    +'<span class="quizOverviewCount"><strong>'+count+'</strong> question'+(count===1?'':'s')+'</span>'
+    +'<span class="quizOverviewCount">'+participants+' participation'+(participants===1?'':'s')+'</span>'
+    +'</div></div></div>'
+    +'<div class="quiz-actions">'
+    +'<button class="secondary copyAction" data-copy-id="'+q.id+'" title="Copier les questions dans une autre classe">⧉ Dupliquer</button>'
+    +'<button class="secondary openQuiz" data-id="'+q.id+'">Résultats / Partager</button>'
+    +'<span class="ecoMenu"><button type="button" class="moreOptions" title="Options du quiz" aria-label="Options du quiz '+esc(q.title)+'" aria-haspopup="true" aria-expanded="false">⋮</button>'
+    +'<span class="ecoMenuPanel hide"><button type="button" class="dangerMenuAction" data-delete-type="quiz" data-delete-id="'+q.id+'">Supprimer ce quiz / test</button></span></span>'
+    +'</div></div>';
+ }).join(''):'<p class="quizOverviewEmpty">'
+  +(total===0?'Aucun quiz dans cette classe. Crée-en un ou copie un quiz d’une autre classe.'
+    :quizOverviewFilter==='shared'?'Aucun quiz déjà partagé dans cette classe.'
+    :quizOverviewFilter==='unshared'?'Tous les quiz de cette classe ont déjà été partagés.':'Aucun quiz.')
+  +'</p>';
+ document.querySelectorAll('#quizList .openQuiz').forEach(b=>b.onclick=()=>openQuiz(b.dataset.id));
+}
+el('quizOverviewFilters').addEventListener('click',event=>{
+ const button=event.target.closest('[data-quiz-filter]');
+ if(!button)return;
+ const next=button.dataset.quizFilter;
+ if(!['all','shared','unshared'].includes(next))return;
+ quizOverviewFilter=next;
+ quizOverviewRender();
+});
+async function refreshSelected(){
+ students=await req('ecoquiz_learners?select=id,display_name,learner_code,class_id&class_id=eq.'+selected.id+'&order=display_name.asc');
+ quizzes=await req('ecoquiz_quizzes?select=id,title,published,ever_shared,join_code,class_id,created_at&class_id=eq.'+selected.id+'&order=created_at.desc');
+ if(quizzes.length){
+  const ids=quizzes.map(q=>q.id);
+  const [questionRows,participationRows]=await Promise.all([
+   quizOverviewReadAll('ecoquiz_quiz_questions',ids),
+   quizOverviewReadAll('ecoquiz_attempts',ids)
+  ]);
+  const questionCounts=quizOverviewCounts(questionRows);
+  const participationCounts=quizOverviewCounts(participationRows);
+  quizzes.forEach(q=>{
+   q.question_count=questionCounts.get(q.id)||0;
+   q.participation_count=participationCounts.get(q.id)||0;
+  });
+ }
+ el('classSummary').textContent=students.length+' élève(s) · '+quizzes.length+' quiz ou test(s)';
+ renderRoster();
+ quizOverviewRender();
+ await loadHistory();
+}
+
 el('back').onclick=()=>{hide('classDetails');hide('editor');hide('quizDetail');hide('longitudinal')};
 function randomCode(len=9){const alphabet='ABCDEFGHJKLMNPQRSTUVWXYZ23456789',a=new Uint8Array(len);crypto.getRandomValues(a);return Array.from(a,x=>alphabet[x%alphabet.length]).join('')}
 el('addStudent').onsubmit=async e=>{e.preventDefault();const name=el('studentName').value.trim();if(!name)return;try{await req('ecoquiz_learners','POST',{display_name:name,learner_code:randomCode(),class_code:selected.name,class_id:selected.id});el('studentName').value='';await refreshSelected()}catch(x){alert(x.message)}};
