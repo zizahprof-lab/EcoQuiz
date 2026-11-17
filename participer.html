@@ -7,19 +7,29 @@
 .studentGreetingWish{margin:0;color:#355166;font-size:14px;line-height:1.5}
 .studentGreetingWish strong{color:#6a45b6}
 @media(max-width:520px){.studentGreeting{padding:14px 13px;margin-bottom:16px}.studentGreetingWish{font-size:13px}}
+
+.examSecurityNotice{border-left:4px solid #d97706;background:#fff8ec;color:#794a14;border-radius:7px;padding:12px 13px;font-size:13px;line-height:1.55;margin:13px 0}
+.examSecurityNotice strong{color:#8f4d09}
+.examResetNotice{border:1px solid #f8cba0;border-left:5px solid #d97706;border-radius:9px;padding:14px 15px;background:#fff7ed;color:#873c12;margin:15px 0;font-size:14px;line-height:1.5}
+.examResetNotice strong{display:block;color:#9a3412;margin-bottom:4px}
+.examQuizReminder{font-size:11px;color:#8a5a22;background:#fff8ec;border-radius:6px;padding:7px 9px;margin:10px 0}
 </style></head><body><header><a href="./">Éco<span style="color:#b95288">Quiz</span></a></header><main><section class="card" id="entrance"><span class="pill">Quiz de classe</span><h1>Participer à une évaluation</h1><p class="muted">Saisis le code du quiz indiqué par ton professeur.</p><label>Code de l'évaluation</label><input id="join" placeholder="Ex. BBE4E79A" maxlength="15" autocomplete="off"><button id="search" style="margin-top:15px">Accéder au quiz →</button><p class="error" id="joinError"></p></section>
-<section id="identity" class="card hide"><span class="pill" id="className"></span><h1 id="quizTitle"></h1><p>Pour retrouver tes résultats d'un quiz à l'autre, utilise ton <b>code élève personnel</b>, remis par ton professeur.</p><p class="orderNotice">↝ Les questions sont mélangées pour chaque élève, mais évaluées de la même façon.</p><label>Code élève</label><input id="learner" maxlength="18" placeholder="Ton code personnel" autocomplete="off"><p><button id="start">Commencer</button></p><p id="identityError" class="error"></p></section>
+<section id="identity" class="card hide"><span class="pill" id="className"></span><h1 id="quizTitle"></h1><p>Pour retrouver tes résultats d'un quiz à l'autre, utilise ton <b>code élève personnel</b>, remis par ton professeur.</p><p class="orderNotice">↝ Les questions sont mélangées pour chaque élève, mais évaluées de la même façon.</p>
+<div class="examSecurityNotice"><strong>Attention, quiz surveillé :</strong> si tu changes d’onglet, ouvres une autre application ou quittes le navigateur, le quiz sera remis à zéro. Toutes tes réponses en cours seront perdues. Reste sur cette page jusqu’à la validation.</div>
+<div id="examResetNotice" class="examResetNotice hide" role="alert"><strong>Quiz réinitialisé</strong>Tu as quitté la page pendant le quiz. Les réponses en cours n’ont pas été enregistrées. Saisis ton code et recommence depuis la question 1.</div>
+<label>Code élève</label><input id="learner" maxlength="18" placeholder="Ton code personnel" autocomplete="off"><p><button id="start">Commencer</button></p><p id="identityError" class="error"></p></section>
 <section id="quiz" class="card hide"><div class="studentGreeting" id="studentGreeting" role="status" aria-live="polite">
   <span class="studentGreetingEyebrow">ÉCOQUIZ · PRÊT POUR TON ÉVALUATION</span>
   <p class="studentGreetingHeadline" id="welcomeName">Bienvenue !</p>
   <p class="studentGreetingWish"><strong>M. Zizah</strong> te souhaite bon courage pour ce quiz !</p>
- </div><div class="muted" id="counter"></div><div class="progress"><div id="bar"></div></div><h2 id="question"></h2><div id="options"></div><p><button id="next" disabled>Question suivante →</button></p><p id="submitError" class="error"></p></section>
+ </div><div class="muted" id="counter"></div><p class="examQuizReminder">Reste sur cette page jusqu’à la validation : changer d’onglet ou d’application remettra le quiz à zéro.</p><div class="progress"><div id="bar"></div></div><h2 id="question"></h2><div id="options"></div><p><button id="next" disabled>Question suivante →</button></p><p id="submitError" class="error"></p></section>
 <section id="final" class="card hide" role="status" aria-live="polite"><span class="pill">Évaluation terminée</span><h1 id="result">Tes réponses ont bien été enregistrées !</h1><p>Merci pour ta participation.</p><p class="muted">Ton professeur consultera tes résultats. Aucune note n’est affichée ici.</p><a href="./">Retour à ÉcoQuiz</a></section></main>
 <script>
 'use strict';
 const BASE='https://gxqepioanisijaszucwz.supabase.co',KEY='sb_publishable_M1QcweNM2782kXp1LmhMNA_VKQBr8SK',el=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
 let quiz=null,answers=[],displayOrder=[],index=0,started=0,code='',learner='';
+let examOngoing=false, examSubmitting=false, leftDuringSubmission=false;
 /* Ordre tiré au sort pour chaque participation ; les réponses restent associées
    aux indices originaux attendus par le serveur lors de la correction. */
 function shuffleQuestionOrder(length){
@@ -51,6 +61,29 @@ function answersInOriginalOrder(){
  return canonical;
 }
 const show=id=>el(id).classList.remove('hide'),hide=id=>el(id).classList.add('hide');
+
+function resetExamOnExit(){
+ if(!examOngoing)return;
+ // Un envoi déjà parti vers le serveur ne doit pas être annulé/dupliqué :
+ // on attend son résultat pour savoir si le quiz est réellement terminé.
+ if(examSubmitting){leftDuringSubmission=true;return}
+ examOngoing=false;
+ answers=[];displayOrder=[];index=0;started=0;learner='';
+ el('learner').value='';
+ el('submitError').textContent='';
+ el('identityError').textContent='';
+ el('welcomeName').textContent='Bienvenue !';
+ el('options').replaceChildren();
+ el('next').disabled=true;
+ el('next').textContent='Question suivante →';
+ el('bar').style.width='0%';
+ hide('quiz');hide('final');show('identity');
+ show('examResetNotice');
+}
+document.addEventListener('visibilitychange',()=>{if(document.hidden)resetExamOnExit()});
+window.addEventListener('pagehide',resetExamOnExit);
+window.addEventListener('pageshow',event=>{if(event.persisted&&examOngoing)resetExamOnExit()});
+
 async function rpc(fn,params){const r=await fetch(BASE+'/rest/v1/rpc/'+fn,{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json'},body:JSON.stringify(params)});const data=await r.json().catch(()=>({}));if(!r.ok)throw Error(data.message||'Une erreur est survenue ('+r.status+')');return data}
 el('search').onclick=async()=>{code=el('join').value.trim().toUpperCase();el('joinError').textContent='';if(!code){el('joinError').textContent='Entre le code du quiz.';return}el('search').disabled=true;try{quiz=await rpc('ecoquiz_student_quiz',{p_join_code:code});if(!quiz.questions?.length)throw Error('Le quiz ne contient pas encore de questions');el('className').textContent=quiz.class_code;el('quizTitle').textContent=quiz.title;hide('entrance');show('identity')}catch(e){el('joinError').textContent=e.message}finally{el('search').disabled=false}};
 el('start').onclick=async()=>{
@@ -74,6 +107,10 @@ el('start').onclick=async()=>{
   answers=[];
   index=0;
   started=Date.now();
+  examOngoing=true;
+  examSubmitting=false;
+  leftDuringSubmission=false;
+  hide('examResetNotice');
   hide('identity');
   show('quiz');
   display();
@@ -85,6 +122,37 @@ el('start').onclick=async()=>{
  }
 };
 function display(){el('studentGreeting').classList.toggle('hide',index!==0);const q=quiz.questions[displayOrder[index]];el('counter').textContent='Question '+(index+1)+' sur '+quiz.questions.length;el('bar').style.width=Math.round(index/quiz.questions.length*100)+'%';el('question').textContent=q.prompt;el('options').replaceChildren();q.options.forEach((t,i)=>{const b=document.createElement('button');b.className='option'+(answers[index]===i?' selected':'');b.textContent=t;b.onclick=()=>{answers[index]=i;display()};el('options').append(b)});el('next').disabled=answers[index]===undefined;el('next').textContent=index===quiz.questions.length-1?'Valider mon quiz':'Question suivante →'};
-el('next').onclick=async()=>{if(answers[index]===undefined)return;if(index<quiz.questions.length-1){index++;display();return}el('next').disabled=true;el('submitError').textContent='Enregistrement des réponses…';try{const data=await rpc('ecoquiz_student_submit',{p_join_code:code,p_learner_code:learner,p_answers:answersInOriginalOrder(),p_duration:Math.min(7200,Math.round((Date.now()-started)/1000))});if(!data||(data.saved!==true&&typeof data.score!=='number'))throw Error('Enregistrement non confirmé. Réessaie avant de quitter.');el('result').textContent='Tes réponses ont bien été enregistrées !';hide('quiz');show('final')}catch(e){el('submitError').textContent=e.message+' Tu peux réessayer sans perdre tes réponses.';el('next').disabled=false}};
+el('next').onclick=async()=>{
+ if(!examOngoing||examSubmitting||answers[index]===undefined)return;
+ if(index<quiz.questions.length-1){index++;display();return}
+ el('next').disabled=true;
+ el('submitError').textContent='Enregistrement des réponses…';
+ examSubmitting=true;
+ leftDuringSubmission=false;
+ try{
+  const data=await rpc('ecoquiz_student_submit',{
+   p_join_code:code,p_learner_code:learner,
+   p_answers:answersInOriginalOrder(),
+   p_duration:Math.min(7200,Math.round((Date.now()-started)/1000))
+  });
+  if(!data||(data.saved!==true&&typeof data.score!=='number'))
+   throw Error('Enregistrement non confirmé. Réessaie avant de quitter.');
+  examOngoing=false;
+  examSubmitting=false;
+  leftDuringSubmission=false;
+  el('submitError').textContent='';
+  el('result').textContent='Tes réponses ont bien été enregistrées !';
+  hide('quiz');show('final');
+ }catch(e){
+  examSubmitting=false;
+  if(leftDuringSubmission||document.hidden){
+   leftDuringSubmission=false;
+   resetExamOnExit();
+  }else{
+   el('submitError').textContent=e.message+' Tu peux réessayer sans perdre tes réponses.';
+   el('next').disabled=false;
+  }
+ }
+};
 const preset=new URL(location.href).searchParams.get('code');if(preset){el('join').value=preset;el('search').click()}
 </script></body></html>
